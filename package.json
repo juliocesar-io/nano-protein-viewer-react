@@ -1,29 +1,75 @@
 {
-  "name": "nano-protein-viewer-react",
+  "name": "@juliocesar-io/nano-protein-viewer-react",
   "private": false,
-  "version": "1.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint ."
   },
+  "main": "dist/index.cjs",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "molstar": "^4.8.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "molstar": ">=4.8.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependencies": {
+    "molstar": ">=4.8.0",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.10",
-    "@vitejs/plugin-react": "^4.3.2",
-    "eslint": "^8.57.1",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
-    "typescript-eslint": "^8.46.2"
-  }
+    "@vitejs/plugin-react": "^4.3.2",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.46.2",
+    "vite": "^5.4.10",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "description": "A lightweight, extensible React implementation of the **Nano Protein Viewer**, originally developed as a VSCode extension by [**Steven Yu**](https://marketplace.visualstudio.com/items?itemName=StevenYu.nano-protein-viewer).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juliocesar-io/nano-protein-viewer-react.git"
+  },
+  "keywords": [
+    "protein",
+    "molecule",
+    "biology",
+    "3d",
+    "structure",
+    "pdb",
+    "mmcif",
+    "molstar",
+    "bioinformatics",
+    "computational",
+    "biology",
+    "chemistry",
+    "plddt",
+    "esmfold",
+    "alphafold"
+  ],
+  "author": "Julio Castellanos",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/juliocesar-io/nano-protein-viewer-react/issues"
+  },
+  "homepage": "https://github.com/juliocesar-io/nano-protein-viewer-react#readme"
 }
-

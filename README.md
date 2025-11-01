@@ -6,7 +6,29 @@ This project brings the Mol\*-powered molecular visualization experience to the 
 
 ![demo](images/demo.png)
 
-## 🚀 Quick start
+## Install
+
+```bash
+npm install @juliocesar-io/nano-protein-viewer-react
+```
+
+Peer deps: `react`, `react-dom`, `molstar`.
+
+## Use in your app
+
+```tsx
+import { NanoProteinViewer } from '@juliocesar-io/nano-protein-viewer-react';
+
+const structures = [
+  { name: '1CRN', url: 'https://files.rcsb.org/download/1CRN.pdb', format: 'pdb' }
+];
+
+export default function App() {
+  return <NanoProteinViewer structureUrls={structures} />;
+}
+```
+
+## Local deveploment
 
 **Install dependencies**
 
