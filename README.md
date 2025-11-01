@@ -17,9 +17,9 @@ Peer deps: `react`, `react-dom`, `molstar`.
 ## Use in your app
 
 ```tsx
-import { NanoProteinViewer } from '@juliocesar-io/nano-protein-viewer-react';
+import { NanoProteinViewer, StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
 
-const structures = [
+const structures: StructureUrl[] = [
   { name: '1CRN', url: 'https://files.rcsb.org/download/1CRN.pdb', format: 'pdb' }
 ];
 
@@ -48,7 +48,7 @@ You can define your own logic from a list of structures in src/App.tsx:
 
 
 ```ts
-import type { StructureUrl } from '@types';
+import type { StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
 
 const exampleUrls: StructureUrl[] = [
   {

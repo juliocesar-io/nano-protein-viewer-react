@@ -27,7 +27,7 @@ export default defineConfig({
       entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
       name: 'NanoProteinViewerReact',
       formats: ['es', 'cjs'],
-      fileName: (format) => (format === 'es' ? 'index.esm' : 'index')
+      fileName: (format) => (format === 'es' ? 'index.esm.js' : 'index.cjs')
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'molstar'],
