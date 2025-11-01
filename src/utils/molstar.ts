@@ -199,10 +199,12 @@ export function createMolstarViewer(): MolstarViewerHandle {
         name: themeName,
         label: 'Rainbow (Sequence)',
         category: 'Custom',
-        factory: (ctx: { structure: { units: Array<{ model?: { atomicHierarchy?: { residues?: { _rowCount?: number; label_seq_id?: { value?: (i: number) => number } } } } }> } }) => {
+        factory: (ctx?: unknown) => {
           let min = Infinity, max = -Infinity;
           try {
-            for (const u of ctx.structure.units) {
+            const s = (ctx as { structure?: { units?: Array<{ model?: { atomicHierarchy?: { residues?: { _rowCount?: number; label_seq_id?: { value?: (i: number) => number } } } } }> } })?.structure;
+            const units = s?.units || [];
+            for (const u of units) {
               const residues = u.model?.atomicHierarchy?.residues;
               if (!residues) continue;
               for (let i=0;i<(residues._rowCount||0);i++) {
@@ -216,9 +218,10 @@ export function createMolstarViewer(): MolstarViewerHandle {
           const grad = gradient(colors, total).map(h => parseInt(h.slice(1),16));
           return {
             granularity: 'group',
-            color: (loc: ColorLocDetailed) => {
+            color: (loc: unknown) => {
               try {
-                const u = loc.unit; const idx = u.model.atomicHierarchy.residueAtomSegments.index[loc.element];
+                const l = loc as ColorLocDetailed;
+                const u = l.unit; const idx = u.model.atomicHierarchy.residueAtomSegments.index[l.element];
                 const id = u.model.atomicHierarchy.residues.label_seq_id.value(idx);
                 const ci = Math.max(0, Math.min(total-1, id-min));
                 return grad[ci] ?? 0x808080;
@@ -245,7 +248,6 @@ export function createMolstarViewer(): MolstarViewerHandle {
         case 'residue': return 'residue-name';
         case 'secondary': return 'secondary-structure';
         case 'chain': return 'chain-id';
-        case 'rainbow': return 'sequence-id';
         case 'custom':
         default: return 'uniform';
       }
@@ -381,7 +383,8 @@ export function createMolstarViewer(): MolstarViewerHandle {
         for (const c of s.components) {
           if (!c.representations) continue;
           for (const r of c.representations) {
-            const t = r.cell.transform.params?.type?.name || r.cell.transform.params?.type;
+            const typeField = (r.cell.transform.params as Record<string, unknown> | undefined)?.['type'] as { name?: string } | string | undefined;
+            const t = typeof typeField === 'object' ? typeField?.name : typeField;
             if (t === 'gaussian-surface' || t === 'molecular-surface') toDelete.push(r.cell);
           }
         }
@@ -406,9 +409,10 @@ export function createMolstarViewer(): MolstarViewerHandle {
           let colorName = 'uniform';
             let colorParams: Record<string, unknown> = {};
           if (options.inherit) {
-            const base = c.representations?.[0]?.cell.transform.params?.colorTheme;
+            const paramsAny = c.representations?.[0]?.cell.transform.params as Record<string, unknown> | undefined;
+            const base = (paramsAny?.['colorTheme'] as { name?: string; params?: Record<string, unknown> } | undefined);
             colorName = base?.name || 'chain-id';
-              colorParams = (base?.params as Record<string, unknown>) || {};
+            colorParams = base?.params || {};
           } else if (options.customColor) {
             colorName = 'uniform';
             colorParams = { value: parseInt(String(options.customColor).replace('#',''), 16) };

@@ -204,19 +204,59 @@ export function ControlsPanel(props: ControlsPanelProps) {
         {props.surface && props.setSurface && (
           <div style={{ marginTop: 8 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
-              <input type="checkbox" checked={props.surface.enabled} onChange={(e) => props.setSurface!({ ...props.surface, enabled: e.target.checked })} /> Surface
+              <input
+                type="checkbox"
+                checked={props.surface.enabled}
+                onChange={(e) => props.setSurface!({
+                  enabled: e.target.checked,
+                  opacity: props.surface!.opacity,
+                  inherit: props.surface!.inherit,
+                  customColor: props.surface!.customColor
+                })}
+              /> Surface
             </label>
             {props.surface.enabled && (
               <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
                 <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Opacity
-                  <input type="range" min={0} max={100} value={props.surface.opacity} onChange={(e) => props.setSurface!({ ...props.surface, opacity: parseInt(e.target.value) })} style={{ width: '100%', marginTop: 4 }} />
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={props.surface.opacity}
+                    onChange={(e) => props.setSurface!({
+                      enabled: props.surface!.enabled,
+                      opacity: parseInt(e.target.value),
+                      inherit: props.surface!.inherit,
+                      customColor: props.surface!.customColor
+                    })}
+                    style={{ width: '100%', marginTop: 4 }}
+                  />
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
-                  <input type="checkbox" checked={props.surface.inherit} onChange={(e) => props.setSurface!({ ...props.surface, inherit: e.target.checked })} /> Inherit color from theme
+                  <input
+                    type="checkbox"
+                    checked={props.surface.inherit}
+                    onChange={(e) => props.setSurface!({
+                      enabled: props.surface!.enabled,
+                      opacity: props.surface!.opacity,
+                      inherit: e.target.checked,
+                      customColor: props.surface!.customColor
+                    })}
+                  /> Inherit color from theme
                 </label>
                 {!props.surface.inherit && (
                   <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Surface Color
-                    <input type="color" value={props.surface.customColor} onChange={(e) => props.setSurface!({ ...props.surface, customColor: e.target.value })} style={{ marginLeft: 8 }} />
+                    <input
+                      type="color"
+                      value={props.surface.customColor}
+                      onChange={(e) => props.setSurface!({
+                        enabled: props.surface!.enabled,
+                        opacity: props.surface!.opacity,
+                        inherit: props.surface!.inherit,
+                        customColor: e.target.value
+                      })}
+                      style={{ marginLeft: 8 }}
+                    />
                   </label>
                 )}
               </div>

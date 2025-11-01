@@ -13,7 +13,7 @@ declare module 'molstar/build/viewer/molstar' {
     dispose: () => void;
     builders: {
       data: {
-        rawData: (args: { data: string; label?: string }) => Promise<{ cell?: unknown } | unknown>;
+        rawData: (args: { data: string; label?: string }) => Promise<{ cell?: unknown }>;
       };
       structure: {
         parseTrajectory: (raw: unknown, format: 'mmcif' | 'pdb') => Promise<unknown>;
@@ -55,7 +55,7 @@ declare module 'molstar/build/viewer/molstar' {
     };
     managers: {
       structure: {
-        hierarchy: { current: { structures: unknown[] } };
+        hierarchy: { current: { structures: MolstarStructureEntry[] } };
         component: {
           updateRepresentationsTheme: (
             components: unknown[],
@@ -94,6 +94,25 @@ declare module 'molstar/build/viewer/molstar' {
       options: Record<string, unknown>
     ) => Promise<MolstarViewerInstance>;
   };
+}
+
+// Minimal internal shapes used by our utils for stronger typing
+declare interface MolstarStructureRepresentationCell {
+  transform: { params?: Record<string, unknown> };
+}
+
+declare interface MolstarRepresentation {
+  cell: MolstarStructureRepresentationCell;
+}
+
+declare interface MolstarComponent {
+  representations?: MolstarRepresentation[];
+  cell: unknown;
+}
+
+declare interface MolstarStructureEntry {
+  cell?: { obj?: { data?: unknown } };
+  components?: MolstarComponent[];
 }
 
 
