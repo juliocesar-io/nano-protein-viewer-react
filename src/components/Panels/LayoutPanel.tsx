@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface LayoutPanelProps {
   mode: 'single'|'grid';
   setMode: (m: 'single'|'grid') => void;

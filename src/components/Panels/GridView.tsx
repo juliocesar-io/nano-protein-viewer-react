@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LoadedStructure } from '@types';
 import { createMolstarViewer } from '@utils/molstar';
 

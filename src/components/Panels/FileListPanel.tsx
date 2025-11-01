@@ -1,4 +1,3 @@
-import React from 'react';
 import type { StructureFormat } from '@types';
 
 interface FileListPanelProps {

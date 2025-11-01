@@ -1,4 +1,3 @@
-import React from 'react';
 import { NanoProteinViewer } from '@components/NanoProteinViewer';
 import type { StructureUrl } from '@types';
 

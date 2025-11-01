@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type ColorMode = 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow';
 
