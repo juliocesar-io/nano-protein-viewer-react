@@ -1,12 +1,16 @@
 import { Viewer } from 'molstar/build/viewer/molstar';
+import type { MolstarViewerInstance } from 'molstar/build/viewer/molstar';
 import type { StructureFormat } from '@types';
 
 export interface MolstarViewerHandle {
-  viewer: Viewer | null;
+  viewer: MolstarViewerInstance | null;
   mount: (container: HTMLElement) => Promise<void>;
   clear: () => Promise<void>;
   loadStructureText: (data: string, format: StructureFormat, maintainView?: boolean) => Promise<void>;
-  updateColorTheme: (mode: 'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow', params?: any) => Promise<void>;
+  updateColorTheme: (
+    mode: 'custom' | 'element' | 'residue' | 'secondary' | 'chain' | 'rainbow',
+    params?: ColorThemeParams
+  ) => Promise<void>;
   listChains: () => Promise<string[]>;
   applyIllustrativeStyle: (enabled: boolean) => Promise<void>;
   applySurface: (enabled: boolean, options?: { opacity?: number; inherit?: boolean; customColor?: string }) => Promise<void>;
@@ -14,8 +18,31 @@ export interface MolstarViewerHandle {
   resetColorTheme: () => Promise<void>;
 }
 
+type ChainColorParams = { chainColors: Record<string | number, string | number> };
+type CustomColorParams = { hex: string | number };
+type SecondaryColorParams = { secondaryColors: { helix: string; sheet: string; coil: string } };
+type RainbowParams = { palette?: string };
+export type ColorThemeParams = Partial<ChainColorParams & CustomColorParams & SecondaryColorParams & RainbowParams>;
+
+type TrajectoryLike = { cell?: unknown };
+function isTrajectory(value: unknown): value is TrajectoryLike {
+  return typeof value === 'object' && value !== null && 'cell' in (value as Record<string, unknown>);
+}
+
+type ChainUnit = { label_asym_id?: string; chainGroupId?: string | number };
+type StructureCellData = { units?: ChainUnit[] };
+function isStructureCellData(value: unknown): value is StructureCellData {
+  return typeof value === 'object' && value !== null && ('units' in (value as Record<string, unknown>));
+}
+
+type AtomicHierarchy = {
+  residueAtomSegments: { index: ArrayLike<number> };
+  residues: { label_seq_id: { value: (i: number) => number } };
+};
+type ColorLocDetailed = { unit: { model: { atomicHierarchy: AtomicHierarchy } }; element: number };
+
 export function createMolstarViewer(): MolstarViewerHandle {
-  let viewer: Viewer | null = null;
+  let viewer: MolstarViewerInstance | null = null;
   let hostEl: HTMLElement | null = null;
 
   async function mount(container: HTMLElement) {
@@ -70,15 +97,15 @@ export function createMolstarViewer(): MolstarViewerHandle {
       console.warn('[Mol*] Failed to load data node (rawData).');
       return;
     }
-    const molFormat = format === 'mmcif' ? 'mmcif' : 'pdb';
+    const molFormat: 'mmcif' | 'pdb' = format === 'mmcif' ? 'mmcif' : 'pdb';
     let parsedOk = false;
     try {
-      const traj: any = await plugin.builders.structure.parseTrajectory(raw, molFormat as any);
-      if (traj && traj.cell) {
+      const traj: unknown = await plugin.builders.structure.parseTrajectory(raw, molFormat);
+      if (isTrajectory(traj) && traj.cell) {
         await plugin.builders.structure.hierarchy.applyPreset(traj, 'default');
         parsedOk = true;
       }
-    } catch (e) {
+    } catch {
       // ignore here, will handle below
       // console.warn('parseTrajectory failed:', e);
     }
@@ -97,7 +124,10 @@ export function createMolstarViewer(): MolstarViewerHandle {
     if (!maintainView) plugin.managers.camera.reset();
   }
 
-  async function updateColorTheme(mode: 'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow', params: any = {}) {
+  async function updateColorTheme(
+    mode: 'custom' | 'element' | 'residue' | 'secondary' | 'chain' | 'rainbow',
+    params: ColorThemeParams = {}
+  ) {
     if (!viewer) return;
     const plugin = viewer.plugin;
     const structures = plugin.managers.structure.hierarchy.current.structures;
@@ -110,13 +140,13 @@ export function createMolstarViewer(): MolstarViewerHandle {
         name,
         label: 'Custom Chain Colors',
         category: 'Custom',
-        factory: (ctx: any) => ({
+        factory: () => ({
           granularity: 'group',
-          color: (loc: any) => {
+          color: (loc: unknown) => {
             try {
-              const unit = loc.unit;
+              const unit = (loc as { unit?: ChainUnit }).unit;
               const chainId = unit?.label_asym_id ?? unit?.chainGroupId ?? 'A';
-              const hex = params.chainColors[chainId] || params.chainColors[String(chainId)] || 0x4ECDC4;
+              const hex = params.chainColors && (params.chainColors[chainId] ?? params.chainColors[String(chainId)]) || 0x4ECDC4;
               const v = typeof hex === 'string' ? parseInt(String(hex).replace('#',''), 16) : hex;
               return v;
             } catch {
@@ -126,7 +156,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
         }),
         getParams: () => ({}),
         defaultValues: {},
-        isApplicable: (ctx: any) => !!ctx.structure
+        isApplicable: (ctx: { structure?: unknown }) => !!ctx.structure
       });
       for (const s of structures) {
         if (s.components && s.components.length > 0) {
@@ -169,7 +199,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
         name: themeName,
         label: 'Rainbow (Sequence)',
         category: 'Custom',
-        factory: (ctx: any) => {
+        factory: (ctx: { structure: { units: Array<{ model?: { atomicHierarchy?: { residues?: { _rowCount?: number; label_seq_id?: { value?: (i: number) => number } } } } }> } }) => {
           let min = Infinity, max = -Infinity;
           try {
             for (const u of ctx.structure.units) {
@@ -186,7 +216,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
           const grad = gradient(colors, total).map(h => parseInt(h.slice(1),16));
           return {
             granularity: 'group',
-            color: (loc: any) => {
+            color: (loc: ColorLocDetailed) => {
               try {
                 const u = loc.unit; const idx = u.model.atomicHierarchy.residueAtomSegments.index[loc.element];
                 const id = u.model.atomicHierarchy.residues.label_seq_id.value(idx);
@@ -198,7 +228,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
         },
         getParams: () => ({}),
         defaultValues: {},
-        isApplicable: (ctx: any) => !!ctx.structure
+        isApplicable: (ctx: { structure?: unknown }) => !!ctx.structure
       });
 
       for (const s of structures) {
@@ -300,8 +330,8 @@ export function createMolstarViewer(): MolstarViewerHandle {
     const out = new Set<string>();
     try {
       for (const s of structures) {
-        const data: any = s.cell?.obj?.data;
-        if (!data?.units) continue;
+        const data = s.cell?.obj?.data as unknown;
+        if (!isStructureCellData(data) || !data.units) continue;
         for (const u of data.units) {
           const id = u?.label_asym_id ?? u?.chainGroupId ?? 'A';
           if (id) out.add(String(id));
@@ -345,7 +375,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
     // remove existing surfaces
     try {
-      const toDelete: any[] = [];
+      const toDelete: unknown[] = [];
       for (const s of structures) {
         if (!s.components) continue;
         for (const c of s.components) {
@@ -374,11 +404,11 @@ export function createMolstarViewer(): MolstarViewerHandle {
       for (const c of s.components) {
         try {
           let colorName = 'uniform';
-          let colorParams: any = {};
+            let colorParams: Record<string, unknown> = {};
           if (options.inherit) {
             const base = c.representations?.[0]?.cell.transform.params?.colorTheme;
             colorName = base?.name || 'chain-id';
-            colorParams = base?.params || {};
+              colorParams = (base?.params as Record<string, unknown>) || {};
           } else if (options.customColor) {
             colorName = 'uniform';
             colorParams = { value: parseInt(String(options.customColor).replace('#',''), 16) };
