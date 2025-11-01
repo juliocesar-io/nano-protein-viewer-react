@@ -22,17 +22,14 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "molstar": ">=4.8.0",
-    "react": ">=18",
-    "react-dom": ">=18"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "molstar": ">=4.8.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "molstar": ">=4.8.0",
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
