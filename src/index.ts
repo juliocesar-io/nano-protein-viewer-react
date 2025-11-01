@@ -1,3 +1,4 @@
+'use client';
 export { NanoProteinViewer } from './components/NanoProteinViewer';
 export type { NanoProteinViewerProps } from './components/NanoProteinViewer';
 
