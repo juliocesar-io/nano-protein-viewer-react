@@ -1,20 +1,17 @@
-# Nano Protein Viewer React 
-
-
+```
+█▄░█ ▄▀█ █▄░█ █▀█   █▀█ █▀█ █▀█ ▀█▀ █▀▀ █ █▄░█   █▀█ █▀▀ ▄▀█ █▀▀ ▀█▀
+█░▀█ █▀█ █░▀█ █▄█   █▀▀ █▀▄ █▄█ ░█░ ██▄ █ █░▀█   █▀▄ ██▄ █▀█ █▄▄ ░█░
+```
   <p align="center">
   <img alt="NPM Version" src="https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react" />
   <a href="https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml"><img alt="Test & Coveralls" src="https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml/badge.svg?branch=main" /></a>
   <a href="https://coveralls.io/github/juliocesar-io/nano-protein-viewer-react"><img alt="Coverage Status" src="https://coveralls.io/repos/github/juliocesar-io/nano-protein-viewer-react/badge.svg" /></a>
   </p>
-  
-
-```
-█▄░█ ▄▀█ █▄░█ █▀█   █▀█ █▀█ █▀█ ▀█▀ █▀▀ █ █▄░█   █▀█ █▀▀ ▄▀█ █▀▀ ▀█▀
-█░▀█ █▀█ █░▀█ █▄█   █▀▀ █▀▄ █▄█ ░█░ ██▄ █ █░▀█   █▀▄ ██▄ █▀█ █▄▄ ░█░
-```
 
 ![demo](images/demo.png)
 
+
+## Overview
 
 A lightweight, extensible React implementation of the **Nano Protein Viewer**, originally developed as a VSCode extension by [**Steven Yu**](https://marketplace.visualstudio.com/items?itemName=StevenYu.nano-protein-viewer).  
  
