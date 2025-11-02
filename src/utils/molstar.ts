@@ -84,27 +84,26 @@ export function createMolstarViewer(): MolstarViewerHandle {
     // Configure UI similar to Viewer options
     const spec = DefaultPluginUISpec();
 
-    // Desired options (aligned with the example provided)
-    const layoutIsExpanded = false;
-    const layoutShowControls = false;
-    const layoutShowLeftPanel = false;
-    const layoutShowSequence = true;
-    const viewportShowExpand = false;
-    const viewportShowSelectionMode = true;
-    const viewportShowAnimation = false;
 
     // Layout initial state
     spec.layout = spec.layout || {};
     spec.layout.initial = {
-      isExpanded: layoutIsExpanded,
-      showControls: layoutShowControls,
+      isExpanded: true,
+      showSequence: true,
+      showControls: true,
+      showPanels: true,
+      fullScreen: true,
       regionState: {
-        bottom: 'hidden',
-        left: layoutShowLeftPanel ? 'full' : 'hidden',
+        left: 'collapsed',
+        top: 'collapsed',
         right: 'hidden',
-        top: layoutShowSequence ? 'hidden' : 'hidden'
+        bottom: 'hidden'
       }
     } as any;
+
+    // Hide Mol* built-in panels entirely (prevents left panel & its toggle)
+    spec.components = spec.components || {};
+    spec.components.disableDragOverlay = false;
 
     // Avoid duplicate global symbol registrations across multiple plugin instances
     if (__molstarBehaviorsInitialized) {
@@ -117,9 +116,15 @@ export function createMolstarViewer(): MolstarViewerHandle {
     // Viewport toolbar toggles
     spec.config = [
       ...(spec.config || []),
-      [PluginConfig.Viewport.ShowExpand, viewportShowExpand],
-      [PluginConfig.Viewport.ShowSelectionMode, viewportShowSelectionMode],
-      [PluginConfig.Viewport.ShowAnimation, viewportShowAnimation]
+      [PluginConfig.Viewport.ShowControls, true],
+      [PluginConfig.Viewport.ShowSettings, true],
+      [PluginConfig.Viewport.ShowExpand, true],
+      [PluginConfig.Viewport.ShowSelectionMode, true],
+      [PluginConfig.Viewport.ShowAnimation, true],
+      [PluginConfig.Viewport.ShowScreenshotControls, true],
+      [PluginConfig.Viewport.ShowToggleFullscreen, true],
+      [PluginConfig.Viewport.ShowReset, true],
+      [PluginConfig.Viewport.ShowXR, false],
     ];
 
     const plugin = await createPluginUI({
@@ -138,21 +143,6 @@ export function createMolstarViewer(): MolstarViewerHandle {
         root.render(component);
       }
     });
-    
-    // Ensure viewport is visible regardless of initial layout edge cases
-    try {
-      plugin.layout.setProps({
-        isExpanded: layoutIsExpanded,
-        showControls: layoutShowControls,
-        regionState: {
-          left: layoutShowLeftPanel ? 'full' : 'hidden',
-          top: 'hidden',
-          right: 'hidden',
-          bottom: 'hidden'
-        },
-        expandToFullscreen: true
-      });
-    } catch {}
     
     viewer = { plugin };
     hostEl = container;
