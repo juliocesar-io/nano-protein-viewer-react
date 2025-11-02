@@ -19,9 +19,6 @@ export default defineConfig({
       '@types': fileURLToPath(new URL('./src/types.ts', import.meta.url))
     }
   },
-  server: {
-    port: 5173
-  },
   build: {
     lib: {
       entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),

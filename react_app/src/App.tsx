@@ -1,7 +1,6 @@
-import { NanoProteinViewer } from '@components/NanoProteinViewer';
-import type { StructureUrl } from '@types';
+import { NanoProteinViewer } from '@juliocesar-io/nano-protein-viewer-react';
+import type { StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
 
-// Example: replace with your own URLs or wire from parent app/router
 const exampleUrls: StructureUrl[] = [
   {
     name: 'AF-A0A2K6V5L6-F1',
@@ -22,7 +21,7 @@ const exampleUrls: StructureUrl[] = [
       illustrative: false,
       surface: { enabled: true, opacity: 40, inherit: true }
     }
-  },
+  }
 ];
 
 export default function App() {
@@ -32,4 +31,5 @@ export default function App() {
     </div>
   );
 }
+
 
