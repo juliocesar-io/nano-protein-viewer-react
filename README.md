@@ -24,6 +24,12 @@ This project brings the Mol\*-powered molecular visualization experience to the 
 pnpm install @juliocesar-io/nano-protein-viewer-react
 ```
 
+Run tests
+
+```bash
+pnpm test
+```
+
 ## Use in your app
 
 ```tsx
@@ -43,14 +49,10 @@ export default function App() {
 
 ## Local deveploment
 
-**Install dependencies**
 
-Run locally:
+Run the example react_app locally:
 
 ```bash
-# From repo root, build the library first
-pnpm build
-
 cd react_app
 pnpm install
 pnpm dev
@@ -60,44 +62,6 @@ Go to:  http://localhost:5173
 
 ![grid](images/demo2.gif)
 
-
-**Passing structures by URL**
-
-You can define your own logic from a list of structures in src/App.tsx:
-
-
-```ts
-import type { StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
-
-const exampleUrls: StructureUrl[] = [
-  {
-    name: 'AF-A0A2K6V5L6-F1',
-    url: 'https://alphafold.ebi.ac.uk/files/AF-A0A2K6V5L6-F1-model_v6.cif',
-    format: 'mmcif',
-    style: {
-      illustrative: true,
-      surface: { enabled: true, opacity: 8, inherit: true }
-    }
-  },
-  {
-    name: '1CRN',
-    url: 'https://files.rcsb.org/download/1CRN.pdb',
-    format: 'pdb',
-    style: {
-      colorMode: 'secondary',
-      customColor: '#4ECDC4',
-      illustrative: false,
-      surface: { enabled: true, opacity: 40, inherit: true }
-    }
-  },
-];
-```
-Then render them in your app:
-```ts
-import { NanoProteinViewer } from '@components/NanoProteinViewer';
-
-<NanoProteinViewer structureUrls={exampleUrls} />
-```
 
 ## Design Rationale
 
