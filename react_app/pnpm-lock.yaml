@@ -11,9 +11,6 @@ importers:
       '@juliocesar-io/nano-protein-viewer-react':
         specifier: file:..
         version: file:..(molstar@5.2.0(@types/react@18.3.26)(fp-ts@2.16.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      molstar:
-        specifier: ^5.2.0
-        version: 5.2.0(@types/react@18.3.26)(fp-ts@2.16.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
