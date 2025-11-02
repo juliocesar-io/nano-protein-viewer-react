@@ -1,4 +1,3 @@
-import { Viewer } from 'molstar/lib/apps/viewer/app';
 import type { MolstarViewerInstance } from 'molstar/lib/apps/viewer/app';
 import type { StructureFormat } from '@types';
 
@@ -59,6 +58,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       hostEl = null;
     }
 
+    const { Viewer } = await import('molstar/lib/apps/viewer/app');
     viewer = await Viewer.create(container, {
       layoutIsExpanded: false,
       layoutShowControls: false,

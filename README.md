@@ -1,10 +1,15 @@
 # Nano Protein Viewer React 
 
+![NPM Version](https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react)
+
+![demo](images/demo.png)
+
+
 A lightweight, extensible React implementation of the **Nano Protein Viewer**, originally developed as a VSCode extension by [**Steven Yu**](https://marketplace.visualstudio.com/items?itemName=StevenYu.nano-protein-viewer).  
  
 This project brings the Mol\*-powered molecular visualization experience to the web enabling integration into any React or Next.js application.
 
-![demo](images/demo.png)
+
 
 
 
