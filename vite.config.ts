@@ -30,7 +30,16 @@ export default defineConfig({
       fileName: (format) => (format === 'es' ? 'index.esm.js' : 'index.cjs')
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'molstar'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'molstar',
+        'molstar/build/viewer/molstar',
+        'molstar/lib/mol-plugin/context',
+        'molstar/lib/mol-plugin/spec'
+      ],
       output: {
         globals: {
           react: 'React',

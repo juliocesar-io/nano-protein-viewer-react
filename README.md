@@ -9,7 +9,7 @@ This project brings the Mol\*-powered molecular visualization experience to the 
 ## Install
 
 ```bash
-npm install @juliocesar-io/nano-protein-viewer-react
+pnpm install @juliocesar-io/nano-protein-viewer-react
 ```
 
 Peer deps: `react`, `react-dom`, `molstar`.
@@ -17,14 +17,18 @@ Peer deps: `react`, `react-dom`, `molstar`.
 ## Use in your app
 
 ```tsx
-import { NanoProteinViewer, StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
+import { NanoProteinViewer, type StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
 
 const structures: StructureUrl[] = [
   { name: '1CRN', url: 'https://files.rcsb.org/download/1CRN.pdb', format: 'pdb' }
 ];
 
 export default function App() {
-  return <NanoProteinViewer structureUrls={structures} />;
+  return (
+    <div style={{ width: '100%', height: '100vh' }}>
+      <NanoProteinViewer structureUrls={structures} />
+    </div>
+  );
 }
 ```
 
@@ -35,12 +39,13 @@ export default function App() {
 Run locally:
 
 ```bash
-npm install
-npm run dev
+# From repo root, build the library first
+pnpm build
+
+cd react_app
+pnpm install
+pnpm dev
 ```
-
-Go to: http://localhost:5173
-
 
 **Passing structures by URL**
 
