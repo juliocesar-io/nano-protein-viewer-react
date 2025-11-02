@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@juliocesar-io/nano-protein-viewer-react": "file:..",
-    "molstar": ">=4.8.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import '../molstar.css';
 import type { LoadedStructure, StructureFormat, StructureUrl } from '@types';
 import { createMolstarViewer } from '@utils/molstar';
 import { ControlsPanel } from './Panels/ControlsPanel';
