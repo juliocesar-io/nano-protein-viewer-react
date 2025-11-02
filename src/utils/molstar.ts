@@ -242,6 +242,26 @@ export function createMolstarViewer(): MolstarViewerHandle {
       return;
     }
 
+    if (mode === 'custom' && params?.hex) {
+      const hexValue = parseInt(String(params.hex).replace('#',''), 16);
+      const name = 'uniform-fixed-react-' + Math.random().toString(36).slice(2);
+      plugin.representation.structure.themes.colorThemeRegistry.add({
+        name,
+        label: 'Uniform (Fixed)',
+        category: 'Custom',
+        factory: () => ({ granularity: 'group', color: () => hexValue }),
+        getParams: () => ({}),
+        defaultValues: {},
+        isApplicable: (ctx: { structure?: unknown }) => !!ctx.structure
+      });
+      for (const s of structures) {
+        if (!s.components || s.components.length === 0) continue;
+        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: name });
+      }
+      return;
+    }
+
+    // For secondary with custom shades, fall back to built-in secondary-structure
     const themeName = (() => {
       switch (mode) {
         case 'element': return 'element-symbol';
@@ -253,53 +273,11 @@ export function createMolstarViewer(): MolstarViewerHandle {
       }
     })();
 
-    const themeParams = (() => {
-      if (mode === 'custom' && params?.hex) {
-        const hexValue = parseInt(String(params.hex).replace('#',''), 16);
-        return { value: hexValue };
-      }
-      if (mode === 'secondary' && params?.secondaryColors) {
-        const toHex = (h: string) => parseInt(h.replace('#',''), 16);
-        return {
-          colors: {
-            name: 'custom',
-            params: {
-              alphaHelix: toHex(params.secondaryColors.helix),
-              threeTenHelix: toHex(params.secondaryColors.helix),
-              piHelix: toHex(params.secondaryColors.helix),
-              betaStrand: toHex(params.secondaryColors.sheet),
-              betaTurn: toHex(params.secondaryColors.sheet),
-              coil: toHex(params.secondaryColors.coil),
-              bend: toHex(params.secondaryColors.coil),
-              turn: toHex(params.secondaryColors.coil),
-              dna: toHex(params.secondaryColors.coil),
-              rna: toHex(params.secondaryColors.coil),
-              carbohydrate: toHex(params.secondaryColors.coil)
-            }
-          },
-          saturation: -1,
-          lightness: 0
-        };
-      }
-      return {};
-    })();
-
     for (const s of structures) {
-      if (!s.components) continue;
-      for (const c of s.components) {
-        if (!c.representations) continue;
-        for (const r of c.representations) {
-          try {
-            const update = plugin.build().to(r.cell).update({
-              ...r.cell.transform.params,
-              colorTheme: { name: themeName, params: themeParams }
-            });
-            await update.commit();
-          } catch {
-            // Representation may have been disposed due to a concurrent load; ignore.
-          }
-        }
-      }
+      if (!s.components || s.components.length === 0) continue;
+      try {
+        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: themeName });
+      } catch {}
     }
   }
 
@@ -309,19 +287,10 @@ export function createMolstarViewer(): MolstarViewerHandle {
     const structures = plugin.managers.structure.hierarchy.current.structures;
     if (!structures || structures.length === 0) return;
     for (const s of structures) {
-      if (!s.components) continue;
-      for (const c of s.components) {
-        if (!c.representations) continue;
-        for (const r of c.representations) {
-          try {
-            const update = plugin.build().to(r.cell).update({
-              ...r.cell.transform.params,
-              colorTheme: { name: 'chain-id', params: {} }
-            });
-            await update.commit();
-          } catch {}
-        }
-      }
+      if (!s.components || s.components.length === 0) continue;
+      try {
+        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: 'chain-id' });
+      } catch {}
     }
   }
 
