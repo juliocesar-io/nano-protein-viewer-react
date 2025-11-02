@@ -1,5 +1,5 @@
-import { Viewer } from 'molstar/build/viewer/molstar';
-import type { MolstarViewerInstance } from 'molstar/build/viewer/molstar';
+import { Viewer } from 'molstar/lib/apps/viewer/app';
+import type { MolstarViewerInstance } from 'molstar/lib/apps/viewer/app';
 import type { StructureFormat } from '@types';
 
 export interface MolstarViewerHandle {

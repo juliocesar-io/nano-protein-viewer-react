@@ -1,4 +1,4 @@
-declare module 'molstar/build/viewer/molstar' {
+declare module 'molstar/lib/apps/viewer/app' {
   // Minimal but typed shim for the Mol* bundled Viewer used in this project.
   export interface MolstarPluginBuilder {
     to: (cell: unknown) => {
