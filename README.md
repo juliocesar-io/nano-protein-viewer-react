@@ -47,7 +47,7 @@ export default function App() {
   );
 ```
 
-## Local deveploment
+## Local development
 
 
 Run the example react_app locally:
@@ -71,6 +71,46 @@ This React app:
 - Enables embedding in research dashboards, notebooks, or web portals
 - Provides a base to extend features (grid view, color themes, External API integration) gradually
 - Allows server-side frameworks (Next.js, Remix, Vite) to integrate molecular viewers easily
+
+### Viewer Props
+
+ The viewer accepts an array of `StructureUrl` via the `structureUrls` prop. Each entry can optionally include initial style settings applied on load.
+
+ | **Field**                   | **Type**                                                                              | **Required** | **Description**                                                              |
+ | --------------------------- | ------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------- |
+ | `name`                      | `string`                                                                              | Yes          | Display name for the structure. Also used for per-file settings.             |
+ | `url`                       | `string`                                                                              | Yes          | Direct URL to the structure file.                                            |
+ | `format`                    | `StructureFormat ('pdb' \| 'mmcif' \| 'sdf')`                                         | No           | Optional; auto-detected from `name` or `url` extension when omitted.         |
+ | `style.colorMode`           | `'none' \| 'custom' \| 'element' \| 'residue' \| 'secondary' \| 'chain' \| 'rainbow'` | No           | Initial color theme applied on load. Use `style.customColor` when `"custom"`. |
+ | `style.customColor`         | `string` (hex)                                                                        | No           | Used when `colorMode` is `"custom"`.                                         |
+ | `style.illustrative`        | `boolean`                                                                             | No           | Enables illustrative/cartoon effect.                                         |
+ | `style.surface.enabled`     | `boolean`                                                                             | No           | Toggles molecular surface rendering.                                         |
+ | `style.surface.opacity`     | `number` (0–100)                                                                      | No           | Surface opacity percentage.                                                  |
+ | `style.surface.inherit`     | `boolean`                                                                             | No           | Inherit surface color from current theme.                                    |
+ | `style.surface.customColor` | `string` (hex)                                                                        | No           | Surface color when not inheriting.                                           |
+
+Minimal example:
+
+```ts
+import { NanoProteinViewer, type StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
+
+const structures: StructureUrl[] = [
+  {
+    name: 'AF-A0A2K6V5L6-F1',
+    url: 'https://alphafold.ebi.ac.uk/files/AF-A0A2K6V5L6-F1-model_v6.cif',
+    format: 'mmcif',
+    style: { illustrative: true, surface: { enabled: true, opacity: 8, inherit: true } }
+  },
+  {
+    name: '1CRN',
+    url: 'https://files.rcsb.org/download/1CRN.pdb',
+    format: 'pdb',
+    style: { colorMode: 'secondary', customColor: '#4ECDC4', surface: { enabled: true, opacity: 40, inherit: true } }
+  }
+];
+
+<NanoProteinViewer structureUrls={structures} />
+```
 
 ## License & Attribution
 
