@@ -1,5 +1,4 @@
-import { NanoProteinViewer } from '@juliocesar-io/nano-protein-viewer-react';
-import type { StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
+import { NanoProteinViewer, type StructureUrl } from '@juliocesar-io/nano-protein-viewer-react';
 
 const exampleUrls: StructureUrl[] = [
   {
