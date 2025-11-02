@@ -1,6 +1,9 @@
 # Nano Protein Viewer React 
 
-![NPM Version](https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react)
+  ![NPM Version](https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react)
+  [![Test & Coveralls](https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml)
+  [![Coverage Status](https://coveralls.io/repos/github/juliocesar-io/nano-protein-viewer-react/badge.svg)](https://coveralls.io/github/juliocesar-io/nano-protein-viewer-react)
+
 
 ![demo](images/demo.png)
 
@@ -9,11 +12,6 @@ A lightweight, extensible React implementation of the **Nano Protein Viewer**, o
  
 This project brings the Mol\*-powered molecular visualization experience to the web enabling integration into any React or Next.js application.
 
-
-
-
-
-![grid](images/demo2.gif)
 
 ## Install
 
@@ -52,6 +50,11 @@ cd react_app
 pnpm install
 pnpm dev
 ```
+
+Go to:  http://localhost:5173
+
+![grid](images/demo2.gif)
+
 
 **Passing structures by URL**
 
