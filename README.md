@@ -6,6 +6,10 @@ This project brings the Mol\*-powered molecular visualization experience to the 
 
 ![demo](images/demo.png)
 
+
+
+![grid](images/demo2.gif)
+
 ## Install
 
 ```bash
@@ -27,7 +31,6 @@ export default function App() {
       <NanoProteinViewer structureUrls={structures} />
     </div>
   );
-}
 ```
 
 ## Local deveploment
