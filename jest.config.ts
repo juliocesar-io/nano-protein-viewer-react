@@ -12,7 +12,8 @@ const config: Config = {
   moduleNameMapper: {
     '^@components(.*)$': '<rootDir>/src/components$1',
     '^@utils(.*)$': '<rootDir>/src/utils$1',
-    '^@types$': '<rootDir>/src/types.ts'
+    '^@types$': '<rootDir>/src/types.ts',
+    '^molstar/lib/.*$': '<rootDir>/__mocks__/molstar-lib.ts'
   },
   collectCoverage: true,
   collectCoverageFrom: [
