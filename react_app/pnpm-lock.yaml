@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@juliocesar-io/nano-protein-viewer-react':
-        specifier: file:..
-        version: file:..(molstar@5.2.0(@types/react@19.2.2)(fp-ts@2.16.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        specifier: ^0.0.6
+        version: 0.0.6(molstar@5.2.0(@types/react@19.2.2)(fp-ts@2.16.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react:
         specifier: ^19.0.0
         version: 19.2.0
@@ -291,8 +291,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@juliocesar-io/nano-protein-viewer-react@file:..':
-    resolution: {directory: .., type: directory}
+  '@juliocesar-io/nano-protein-viewer-react@0.0.6':
+    resolution: {integrity: sha512-CNVajrKeM/whWVrt/pb4MWctsoPHwQ/Nza0Ftd8F3KnQ3eJhKHpSI62ts9+xQnUeU0uW5Qs4YE9uCJt5pW5kRw==}
     peerDependencies:
       molstar: '>=4.8.0'
       react: '>=18'
@@ -1866,7 +1866,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@juliocesar-io/nano-protein-viewer-react@file:..(molstar@5.2.0(@types/react@19.2.2)(fp-ts@2.16.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@juliocesar-io/nano-protein-viewer-react@0.0.6(molstar@5.2.0(@types/react@19.2.2)(fp-ts@2.16.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       molstar: 5.2.0(@types/react@19.2.2)(fp-ts@2.16.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0

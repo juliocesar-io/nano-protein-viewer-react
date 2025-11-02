@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@juliocesar-io/nano-protein-viewer-react": "file:..",
+    "@juliocesar-io/nano-protein-viewer-react": "^0.0.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
