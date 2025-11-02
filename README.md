@@ -3,7 +3,7 @@
 █░▀█ █▀█ █░▀█ █▄█   █▀▀ █▀▄ █▄█ ░█░ ██▄ █ █░▀█   █▀▄ ██▄ █▀█ █▄▄ ░█░
 ```
   <p align="center">
-  <img alt="NPM Version" src="https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react" />
+  <a href="https://www.npmjs.com/package/@juliocesar-io/nano-protein-viewer-react"><img alt="NPM Version" src="https://img.shields.io/npm/v/%40juliocesar-io%2Fnano-protein-viewer-react" /></a>
   <a href="https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml"><img alt="Test & Coveralls" src="https://github.com/juliocesar-io/nano-protein-viewer-react/actions/workflows/coverage.yml/badge.svg?branch=main" /></a>
   <a href="https://coveralls.io/github/juliocesar-io/nano-protein-viewer-react"><img alt="Coverage Status" src="https://coveralls.io/repos/github/juliocesar-io/nano-protein-viewer-react/badge.svg" /></a>
   </p>
