@@ -88,22 +88,14 @@ export function createMolstarViewer(): MolstarViewerHandle {
     // Layout initial state
     spec.layout = spec.layout || {};
     spec.layout.initial = {
-      isExpanded: true,
-      showSequence: true,
-      showControls: true,
-      showPanels: true,
-      fullScreen: true,
+      isExpanded: false,
       regionState: {
         left: 'collapsed',
         top: 'collapsed',
-        right: 'hidden',
+        right: 'collapsed',
         bottom: 'hidden'
       }
     } as any;
-
-    // Hide Mol* built-in panels entirely (prevents left panel & its toggle)
-    spec.components = spec.components || {};
-    spec.components.disableDragOverlay = false;
 
     // Avoid duplicate global symbol registrations across multiple plugin instances
     if (__molstarBehaviorsInitialized) {
@@ -116,7 +108,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
     // Viewport toolbar toggles
     spec.config = [
       ...(spec.config || []),
-      [PluginConfig.Viewport.ShowControls, true],
+      [PluginConfig.Viewport.ShowControls, false],
       [PluginConfig.Viewport.ShowSettings, true],
       [PluginConfig.Viewport.ShowExpand, true],
       [PluginConfig.Viewport.ShowSelectionMode, true],
@@ -125,6 +117,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       [PluginConfig.Viewport.ShowToggleFullscreen, true],
       [PluginConfig.Viewport.ShowReset, true],
       [PluginConfig.Viewport.ShowXR, false],
+
     ];
 
     const plugin = await createPluginUI({
