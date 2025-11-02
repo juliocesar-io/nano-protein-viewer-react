@@ -1,5 +1,14 @@
-import type { MolstarViewerInstance } from 'molstar/lib/apps/viewer/app';
-import type { StructureFormat } from '@types';
+import type { StructureFormat } from '../types';
+import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
+import { DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
+import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { createRoot } from 'react-dom/client';
+
+// Only allow Mol* to register default behaviors (global model props) once per page
+let __molstarBehaviorsInitialized = false;
+
+// Minimal shape to avoid importing Mol* app types that pull Node-only deps
+type MolstarViewerInstance = { plugin: any };
 
 export interface MolstarViewerHandle {
   viewer: MolstarViewerInstance | null;
@@ -43,6 +52,8 @@ type ColorLocDetailed = { unit: { model: { atomicHierarchy: AtomicHierarchy } };
 export function createMolstarViewer(): MolstarViewerHandle {
   let viewer: MolstarViewerInstance | null = null;
   let hostEl: HTMLElement | null = null;
+  // Cache a single React root per target to avoid duplicate createRoot warnings
+  const reactRootCache = new WeakMap<Element, { render: (c: any) => void; unmount: () => void }>();
 
   async function mount(container: HTMLElement) {
     // Reuse if already mounted to same container
@@ -54,21 +65,96 @@ export function createMolstarViewer(): MolstarViewerHandle {
         await viewer.plugin.clear();
         viewer.plugin.dispose();
       } catch {}
+      // Unmount any cached React root for previous host
+      try {
+        const existingRoot = reactRootCache.get(hostEl);
+        if (existingRoot) {
+          existingRoot.unmount();
+          reactRootCache.delete(hostEl);
+        }
+      } catch {}
       viewer = null;
       hostEl = null;
     }
 
-    const { Viewer } = await import('molstar/lib/apps/viewer/app');
-    viewer = await Viewer.create(container, {
-      layoutIsExpanded: false,
-      layoutShowControls: false,
-      layoutShowLeftPanel: false,
-      layoutShowSequence: true,
-      layoutShowLog: false,
-      viewportShowExpand: false,
-      viewportShowSelectionMode: true,
-      viewportShowAnimation: false,
+    // Ensure this only runs in the browser and avoid static analysis of the path
+    if (typeof window === 'undefined') return;
+    // Using statically imported Mol* UI helpers
+
+    // Configure UI similar to Viewer options
+    const spec = DefaultPluginUISpec();
+
+    // Desired options (aligned with the example provided)
+    const layoutIsExpanded = false;
+    const layoutShowControls = false;
+    const layoutShowLeftPanel = false;
+    const layoutShowSequence = true;
+    const viewportShowExpand = false;
+    const viewportShowSelectionMode = true;
+    const viewportShowAnimation = false;
+
+    // Layout initial state
+    spec.layout = spec.layout || {};
+    spec.layout.initial = {
+      isExpanded: layoutIsExpanded,
+      showControls: layoutShowControls,
+      regionState: {
+        bottom: 'hidden',
+        left: layoutShowLeftPanel ? 'full' : 'hidden',
+        right: 'hidden',
+        top: layoutShowSequence ? 'hidden' : 'hidden'
+      }
+    } as any;
+
+    // Avoid duplicate global symbol registrations across multiple plugin instances
+    if (__molstarBehaviorsInitialized) {
+      spec.behaviors = [];
+    } else {
+      __molstarBehaviorsInitialized = true;
+    }
+
+
+    // Viewport toolbar toggles
+    spec.config = [
+      ...(spec.config || []),
+      [PluginConfig.Viewport.ShowExpand, viewportShowExpand],
+      [PluginConfig.Viewport.ShowSelectionMode, viewportShowSelectionMode],
+      [PluginConfig.Viewport.ShowAnimation, viewportShowAnimation]
+    ];
+
+    const plugin = await createPluginUI({
+      target: container,
+      spec,
+      render: (component: any, target: Element) => {
+        let root = reactRootCache.get(target);
+        if (!root) {
+          const r = createRoot(target as HTMLElement);
+          root = {
+            render: (c: any) => r.render(c),
+            unmount: () => r.unmount()
+          };
+          reactRootCache.set(target, root);
+        }
+        root.render(component);
+      }
     });
+    
+    // Ensure viewport is visible regardless of initial layout edge cases
+    try {
+      plugin.layout.setProps({
+        isExpanded: layoutIsExpanded,
+        showControls: layoutShowControls,
+        regionState: {
+          left: layoutShowLeftPanel ? 'full' : 'hidden',
+          top: 'hidden',
+          right: 'hidden',
+          bottom: 'hidden'
+        },
+        expandToFullscreen: true
+      });
+    } catch {}
+    
+    viewer = { plugin };
     hostEl = container;
   }
 
@@ -441,4 +527,3 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
   return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme };
 }
-

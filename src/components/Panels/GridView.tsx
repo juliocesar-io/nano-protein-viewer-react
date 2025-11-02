@@ -19,36 +19,33 @@ export function GridView({ files, maxActive = 8, onSelect }: GridViewProps) {
     setPreviews(files.map(() => null));
   }, [files.length]);
 
-  // Generate preview images using offscreen Mol* viewers
+  // Generate preview images using a single offscreen Mol* viewer (reduces duplicate registry warnings)
   useEffect(() => {
     let cancelled = false;
+    const host = document.createElement('div');
+    host.style.position = 'absolute'; host.style.left = '-9999px'; host.style.top = '-9999px';
+    host.style.width = '300px'; host.style.height = '200px';
+    document.body.appendChild(host);
+    const v = createMolstarViewer();
     (async () => {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        // create hidden container
-        const host = document.createElement('div');
-        host.style.position = 'absolute'; host.style.left = '-9999px'; host.style.top = '-9999px';
-        host.style.width = '300px'; host.style.height = '200px';
-        document.body.appendChild(host);
-        const v = createMolstarViewer();
-        try {
-          await v.mount(host);
+      try {
+        await v.mount(host);
+        for (let i = 0; i < files.length; i++) {
+          if (cancelled) break;
+          const file = files[i];
           await v.loadStructureText(file.data, file.format);
           await new Promise(r => setTimeout(r, 200));
           const canvas = host.querySelector('canvas') as HTMLCanvasElement | null;
           const url = canvas ? canvas.toDataURL('image/png') : null;
           if (!cancelled) {
-            setPreviews(prev => {
-              const next = prev.slice(); next[i] = url; return next;
-            });
+            setPreviews(prev => { const next = prev.slice(); next[i] = url; return next; });
           }
-        } catch {
-          // ignore
-        } finally {
-          try { await v.clear(); } catch {}
-          document.body.removeChild(host);
         }
-        if (cancelled) break;
+      } catch {
+        // ignore
+      } finally {
+        try { await v.clear(); } catch {}
+        document.body.removeChild(host);
       }
     })();
     return () => { cancelled = true; };
