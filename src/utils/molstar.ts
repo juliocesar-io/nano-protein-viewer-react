@@ -3,6 +3,8 @@ import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
 import { DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { createRoot } from 'react-dom/client';
+import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
+import { QualityAssessment, QualityAssessmentProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
 
 // Only allow Mol* to register default behaviors (global model props) once per page
 let __molstarBehaviorsInitialized = false;
@@ -137,6 +139,11 @@ export function createMolstarViewer(): MolstarViewerHandle {
       }
     });
     
+    // Ensure PLDDT theme is available regardless of behavior registration
+    try {
+      plugin.representation.structure.themes.colorThemeRegistry.add(PLDDTConfidenceColorThemeProvider);
+    } catch {}
+
     viewer = { plugin };
     hostEl = container;
   }
@@ -189,6 +196,27 @@ export function createMolstarViewer(): MolstarViewerHandle {
       console.warn('[Mol*] Failed to parse trajectory.');
       return;
     }
+
+    // Try to apply pLDDT theme by default only when true pLDDT data exists
+    try {
+      const structures = plugin.managers.structure.hierarchy.current.structures;
+      if (structures && structures.length > 0) {
+        const structObj = structures[0]?.cell?.obj?.data as any;
+        const models = structObj?.models as any[] | undefined;
+        const hasPLDDT = Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
+        if (hasPLDDT) {
+          // Ensure QA properties are attached for pLDDT access
+          for (const m of models) {
+            await QualityAssessmentProvider.attach(plugin.context, m, void 0, true);
+          }
+          for (const s of structures) {
+            if (s.components && s.components.length > 0) {
+              await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: PLDDTConfidenceColorThemeProvider.name });
+            }
+          }
+        }
+      }
+    } catch {}
 
     if (!maintainView) plugin.managers.camera.reset();
   }
@@ -393,6 +421,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       }
     }
   }
+
 
   async function listChains(): Promise<string[]> {
     if (!viewer) return [];
