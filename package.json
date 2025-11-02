@@ -1,7 +1,7 @@
 {
   "name": "@juliocesar-io/nano-protein-viewer-react",
   "private": false,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "scripts": {
     "build": "vite build",
