@@ -1,5 +1,16 @@
-import type { MolstarViewerInstance } from 'molstar/lib/apps/viewer/app';
-import type { StructureFormat } from '@types';
+import type { StructureFormat } from '../types';
+import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
+import { DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
+import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { createRoot } from 'react-dom/client';
+import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
+import { QualityAssessment, QualityAssessmentProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
+
+// Only allow Mol* to register default behaviors (global model props) once per page
+let __molstarBehaviorsInitialized = false;
+
+// Minimal shape to avoid importing Mol* app types that pull Node-only deps
+type MolstarViewerInstance = { plugin: any };
 
 export interface MolstarViewerHandle {
   viewer: MolstarViewerInstance | null;
@@ -43,6 +54,8 @@ type ColorLocDetailed = { unit: { model: { atomicHierarchy: AtomicHierarchy } };
 export function createMolstarViewer(): MolstarViewerHandle {
   let viewer: MolstarViewerInstance | null = null;
   let hostEl: HTMLElement | null = null;
+  // Cache a single React root per target to avoid duplicate createRoot warnings
+  const reactRootCache = new WeakMap<Element, { render: (c: any) => void; unmount: () => void }>();
 
   async function mount(container: HTMLElement) {
     // Reuse if already mounted to same container
@@ -54,21 +67,84 @@ export function createMolstarViewer(): MolstarViewerHandle {
         await viewer.plugin.clear();
         viewer.plugin.dispose();
       } catch {}
+      // Unmount any cached React root for previous host
+      try {
+        const existingRoot = reactRootCache.get(hostEl);
+        if (existingRoot) {
+          existingRoot.unmount();
+          reactRootCache.delete(hostEl);
+        }
+      } catch {}
       viewer = null;
       hostEl = null;
     }
 
-    const { Viewer } = await import('molstar/lib/apps/viewer/app');
-    viewer = await Viewer.create(container, {
-      layoutIsExpanded: false,
-      layoutShowControls: false,
-      layoutShowLeftPanel: false,
-      layoutShowSequence: true,
-      layoutShowLog: false,
-      viewportShowExpand: false,
-      viewportShowSelectionMode: true,
-      viewportShowAnimation: false,
+    // Ensure this only runs in the browser and avoid static analysis of the path
+    if (typeof window === 'undefined') return;
+    // Using statically imported Mol* UI helpers
+
+    // Configure UI similar to Viewer options
+    const spec = DefaultPluginUISpec();
+
+
+    // Layout initial state
+    spec.layout = spec.layout || {};
+    spec.layout.initial = {
+      isExpanded: false,
+      regionState: {
+        left: 'collapsed',
+        top: 'collapsed',
+        right: 'collapsed',
+        bottom: 'hidden'
+      }
+    } as any;
+
+    // Avoid duplicate global symbol registrations across multiple plugin instances
+    if (__molstarBehaviorsInitialized) {
+      spec.behaviors = [];
+    } else {
+      __molstarBehaviorsInitialized = true;
+    }
+
+
+    // Viewport toolbar toggles
+    spec.config = [
+      ...(spec.config || []),
+      [PluginConfig.Viewport.ShowControls, false],
+      [PluginConfig.Viewport.ShowSettings, true],
+      [PluginConfig.Viewport.ShowExpand, true],
+      [PluginConfig.Viewport.ShowSelectionMode, true],
+      [PluginConfig.Viewport.ShowAnimation, true],
+      [PluginConfig.Viewport.ShowScreenshotControls, true],
+      [PluginConfig.Viewport.ShowToggleFullscreen, true],
+      [PluginConfig.Viewport.ShowReset, true],
+      [PluginConfig.Viewport.ShowXR, false],
+
+    ];
+
+    const plugin = await createPluginUI({
+      target: container,
+      spec,
+      render: (component: any, target: Element) => {
+        let root = reactRootCache.get(target);
+        if (!root) {
+          const r = createRoot(target as HTMLElement);
+          root = {
+            render: (c: any) => r.render(c),
+            unmount: () => r.unmount()
+          };
+          reactRootCache.set(target, root);
+        }
+        root.render(component);
+      }
     });
+    
+    // Ensure PLDDT theme is available regardless of behavior registration
+    try {
+      plugin.representation.structure.themes.colorThemeRegistry.add(PLDDTConfidenceColorThemeProvider);
+    } catch {}
+
+    viewer = { plugin };
     hostEl = container;
   }
 
@@ -120,6 +196,27 @@ export function createMolstarViewer(): MolstarViewerHandle {
       console.warn('[Mol*] Failed to parse trajectory.');
       return;
     }
+
+    // Try to apply pLDDT theme by default only when true pLDDT data exists
+    try {
+      const structures = plugin.managers.structure.hierarchy.current.structures;
+      if (structures && structures.length > 0) {
+        const structObj = structures[0]?.cell?.obj?.data as any;
+        const models = structObj?.models as any[] | undefined;
+        const hasPLDDT = Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
+        if (hasPLDDT) {
+          // Ensure QA properties are attached for pLDDT access
+          for (const m of models) {
+            await QualityAssessmentProvider.attach(plugin.context, m, void 0, true);
+          }
+          for (const s of structures) {
+            if (s.components && s.components.length > 0) {
+              await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: PLDDTConfidenceColorThemeProvider.name });
+            }
+          }
+        }
+      }
+    } catch {}
 
     if (!maintainView) plugin.managers.camera.reset();
   }
@@ -325,6 +422,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
     }
   }
 
+
   async function listChains(): Promise<string[]> {
     if (!viewer) return [];
     const plugin = viewer.plugin;
@@ -441,4 +539,3 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
   return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme };
 }
-
