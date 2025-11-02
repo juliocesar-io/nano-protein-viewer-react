@@ -1,9 +1,10 @@
-import { Viewer } from 'molstar/build/viewer/molstar';
-import type { MolstarViewerInstance } from 'molstar/build/viewer/molstar';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { DefaultPluginSpec } from 'molstar/lib/mol-plugin/spec';
 import type { StructureFormat } from '@types';
 
 export interface MolstarViewerHandle {
-  viewer: MolstarViewerInstance | null;
+  viewer: { plugin: MolstarPluginLike } | null;
   mount: (container: HTMLElement) => Promise<void>;
   clear: () => Promise<void>;
   loadStructureText: (data: string, format: StructureFormat, maintainView?: boolean) => Promise<void>;
@@ -42,7 +43,7 @@ type AtomicHierarchy = {
 type ColorLocDetailed = { unit: { model: { atomicHierarchy: AtomicHierarchy } }; element: number };
 
 export function createMolstarViewer(): MolstarViewerHandle {
-  let viewer: MolstarViewerInstance | null = null;
+  let viewer: { plugin: MolstarPluginLike } | null = null;
   let hostEl: HTMLElement | null = null;
 
   async function mount(container: HTMLElement) {
@@ -52,37 +53,32 @@ export function createMolstarViewer(): MolstarViewerHandle {
     // If mounted to a different container, dispose and recreate
     if (viewer && hostEl && hostEl !== container) {
       try {
-        await viewer.plugin.clear();
-        viewer.plugin.dispose();
+        await (viewer.plugin.clear as UnknownFn)?.();
+        (viewer.plugin.dispose as UnknownFn)?.();
       } catch {}
       viewer = null;
       hostEl = null;
     }
 
-    viewer = await Viewer.create(container, {
-      layoutIsExpanded: false,
-      layoutShowControls: false,
-      layoutShowLeftPanel: false,
-      layoutShowSequence: true,
-      layoutShowLog: false,
-      viewportShowExpand: false,
-      viewportShowSelectionMode: true,
-      viewportShowAnimation: false,
-    });
+    const plugin = new PluginContext(DefaultPluginSpec()) as unknown as MolstarPluginLike;
+    await (plugin.init as UnknownFn)();
+    await (plugin.mountAsync as UnknownFn)(container, { checkeredCanvasBackground: false });
+    viewer = { plugin };
     hostEl = container;
   }
 
   async function clear() {
     if (!viewer) return;
-    await viewer.plugin.clear();
+    const P = viewer.plugin as unknown as Record<string, unknown>;
+    await (P.clear as UnknownFn)?.();
   }
 
   async function loadStructureText(data: string, format: StructureFormat, maintainView: boolean = false) {
     if (!viewer) throw new Error('Viewer not mounted');
 
-    const plugin = viewer.plugin;
+    const P = viewer.plugin as unknown as Record<string, unknown>;
     if (!maintainView) {
-      await plugin.clear();
+      await (P.clear as UnknownFn)?.();
     }
 
     // Use plugin builders consistently (avoids format string mismatch like 'cif')
@@ -92,17 +88,17 @@ export function createMolstarViewer(): MolstarViewerHandle {
     }
 
     // Prefer loading from raw string to avoid blob URL/download issues
-    const raw = await plugin.builders.data.rawData({ data, label: 'structure' });
-    if (!raw || !raw.cell) {
+    const raw = await (P.builders as any).data.rawData({ data, label: 'structure' });
+    if (!raw || !(raw as any).cell) {
       console.warn('[Mol*] Failed to load data node (rawData).');
       return;
     }
     const molFormat: 'mmcif' | 'pdb' = format === 'mmcif' ? 'mmcif' : 'pdb';
     let parsedOk = false;
     try {
-      const traj: unknown = await plugin.builders.structure.parseTrajectory(raw, molFormat);
-      if (isTrajectory(traj) && traj.cell) {
-        await plugin.builders.structure.hierarchy.applyPreset(traj, 'default');
+      const traj: unknown = await (P.builders as any).structure.parseTrajectory(raw, molFormat);
+      if (isTrajectory(traj) && (traj as any).cell) {
+        await (P.builders as any).structure.hierarchy.applyPreset(traj as any, 'default');
         parsedOk = true;
       }
     } catch {
@@ -112,16 +108,16 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
     if (!parsedOk) {
       // If structures already present (concurrent load finished), don't fail hard
-      const existing = plugin.managers.structure.hierarchy.current.structures;
+      const existing = (P.managers as any).structure.hierarchy.current.structures;
       if (existing && existing.length > 0) {
-        if (!maintainView) plugin.managers.camera.reset();
+        if (!maintainView) (P.managers as any).camera.reset();
         return;
       }
       console.warn('[Mol*] Failed to parse trajectory.');
       return;
     }
 
-    if (!maintainView) plugin.managers.camera.reset();
+    if (!maintainView) (P.managers as any).camera.reset();
   }
 
   async function updateColorTheme(
@@ -129,14 +125,14 @@ export function createMolstarViewer(): MolstarViewerHandle {
     params: ColorThemeParams = {}
   ) {
     if (!viewer) return;
-    const plugin = viewer.plugin;
-    const structures = plugin.managers.structure.hierarchy.current.structures;
+    const P = viewer.plugin as any;
+    const structures = P.managers.structure.hierarchy.current.structures;
     if (!structures || structures.length === 0) return;
 
     // Special handling: custom chain colors
     if (mode === 'chain' && params?.chainColors && Object.keys(params.chainColors).length > 0) {
       const name = 'custom-chain-react-' + Math.random().toString(36).slice(2);
-      plugin.representation.structure.themes.colorThemeRegistry.add({
+      P.representation.structure.themes.colorThemeRegistry.add({
         name,
         label: 'Custom Chain Colors',
         category: 'Custom',
@@ -160,7 +156,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       });
       for (const s of structures) {
         if (s.components && s.components.length > 0) {
-          await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: name });
+          await P.managers.structure.component.updateRepresentationsTheme(s.components, { color: name });
         }
       }
       return;
@@ -195,7 +191,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
         return out;
       };
 
-      plugin.representation.structure.themes.colorThemeRegistry.add({
+      P.representation.structure.themes.colorThemeRegistry.add({
         name: themeName,
         label: 'Rainbow (Sequence)',
         category: 'Custom',
@@ -236,7 +232,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
       for (const s of structures) {
         if (s.components && s.components.length > 0) {
-          await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: themeName });
+          await P.managers.structure.component.updateRepresentationsTheme(s.components, { color: themeName });
         }
       }
       return;
@@ -245,7 +241,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
     if (mode === 'custom' && params?.hex) {
       const hexValue = parseInt(String(params.hex).replace('#',''), 16);
       const name = 'uniform-fixed-react-' + Math.random().toString(36).slice(2);
-      plugin.representation.structure.themes.colorThemeRegistry.add({
+      P.representation.structure.themes.colorThemeRegistry.add({
         name,
         label: 'Uniform (Fixed)',
         category: 'Custom',
@@ -256,7 +252,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       });
       for (const s of structures) {
         if (!s.components || s.components.length === 0) continue;
-        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: name });
+        await P.managers.structure.component.updateRepresentationsTheme(s.components, { color: name });
       }
       return;
     }
@@ -276,28 +272,28 @@ export function createMolstarViewer(): MolstarViewerHandle {
     for (const s of structures) {
       if (!s.components || s.components.length === 0) continue;
       try {
-        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: themeName });
+        await P.managers.structure.component.updateRepresentationsTheme(s.components, { color: themeName });
       } catch {}
     }
   }
 
   async function resetColorTheme() {
     if (!viewer) return;
-    const plugin = viewer.plugin;
-    const structures = plugin.managers.structure.hierarchy.current.structures;
+    const P = viewer.plugin as any;
+    const structures = P.managers.structure.hierarchy.current.structures;
     if (!structures || structures.length === 0) return;
     for (const s of structures) {
       if (!s.components || s.components.length === 0) continue;
       try {
-        await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: 'chain-id' });
+        await P.managers.structure.component.updateRepresentationsTheme(s.components, { color: 'chain-id' });
       } catch {}
     }
   }
 
   async function listChains(): Promise<string[]> {
     if (!viewer) return [];
-    const plugin = viewer.plugin;
-    const structures = plugin.managers.structure.hierarchy.current.structures;
+    const P = viewer.plugin as any;
+    const structures = P.managers.structure.hierarchy.current.structures;
     const out = new Set<string>();
     try {
       for (const s of structures) {
@@ -314,12 +310,12 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
   async function applyIllustrativeStyle(enabled: boolean) {
     if (!viewer) return;
-    const plugin = viewer.plugin;
+    const P = viewer.plugin as any;
     // toggle outline/occlusion postprocessing similar to index.html illustrative style
-    if (plugin.canvas3d) {
+    if (P.canvas3d) {
       if (enabled) {
-        const pp = plugin.canvas3d.props.postprocessing;
-        plugin.canvas3d.setProps({
+        const pp = (P.canvas3d as any).props.postprocessing as any;
+        (P.canvas3d as any).setProps({
           postprocessing: {
             outline: { name: 'on', params: pp.outline.name === 'on' ? pp.outline.params : { scale: 1, threshold: 0.33, includeTransparent: true } },
             occlusion: { name: 'on', params: pp.occlusion.name === 'on' ? pp.occlusion.params : { multiScale: { name: 'off', params: {} }, radius: 5, bias: 0.8, blurKernelSize: 15, samples: 32, resolutionScale: 1 } },
@@ -327,7 +323,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
           }
         });
       } else {
-        plugin.canvas3d.setProps({
+        (P.canvas3d as any).setProps({
           postprocessing: {
             outline: { name: 'off', params: {} },
             occlusion: { name: 'off', params: {} },
@@ -340,8 +336,8 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
   async function applySurface(enabled: boolean, options: { opacity?: number; inherit?: boolean; customColor?: string } = {}) {
     if (!viewer) return;
-    const plugin = viewer.plugin;
-    let structures = plugin.managers.structure.hierarchy.current.structures;
+    const P = viewer.plugin as any;
+    let structures = P.managers.structure.hierarchy.current.structures;
     if (!structures || structures.length === 0) return;
 
     // remove existing surfaces
@@ -359,9 +355,9 @@ export function createMolstarViewer(): MolstarViewerHandle {
         }
       }
       if (toDelete.length) {
-        const del = plugin.build();
-        toDelete.forEach(x => del.delete(x));
-        await del.commit();
+        const del = P.build() as any;
+        toDelete.forEach(x => (del as any).delete(x));
+        await (del as any).commit();
       }
     } catch {}
 
@@ -370,7 +366,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
     const alpha = Math.max(0, Math.min(1, (options.opacity ?? 40) / 100));
 
     // Refresh structures snapshot to avoid stale refs
-    structures = plugin.managers.structure.hierarchy.current.structures;
+    structures = P.managers.structure.hierarchy.current.structures;
     for (const s of structures) {
       if (!s.components) continue;
       for (const c of s.components) {
@@ -390,7 +386,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
             colorParams = { value: 0x4ECDC4 };
           }
 
-          await plugin.builders.structure.representation.addRepresentation(c.cell, {
+          await P.builders.structure.representation.addRepresentation(c.cell, {
             type: 'gaussian-surface',
             typeParams: { quality: 'auto', alpha },
             color: colorName,
@@ -410,4 +406,31 @@ export function createMolstarViewer(): MolstarViewerHandle {
 
   return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme };
 }
+
+type UnknownFn = (...args: unknown[]) => unknown;
+type MolstarPluginLike = {
+  init: UnknownFn;
+  mountAsync: UnknownFn;
+  clear?: UnknownFn;
+  dispose?: UnknownFn;
+  plugin?: never; // guard against old shape
+  canvas3d?: { props: { postprocessing: unknown }, setProps: UnknownFn };
+  build: UnknownFn;
+  managers: {
+    structure: {
+      hierarchy: { current: { structures: Array<{ components?: Array<{ representations?: Array<{ cell: { transform: { params?: Record<string, unknown> } } }>; cell: unknown }> }> } };
+      component: { updateRepresentationsTheme: UnknownFn };
+    };
+    camera: { reset: UnknownFn };
+  };
+  builders: {
+    data: { rawData: UnknownFn };
+    structure: {
+      parseTrajectory: UnknownFn;
+      hierarchy: { applyPreset: UnknownFn };
+      representation: { addRepresentation: UnknownFn };
+    };
+  };
+  representation: { structure: { themes: { colorThemeRegistry: { add: UnknownFn } } } };
+};
 

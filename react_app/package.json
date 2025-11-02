@@ -9,9 +9,10 @@
     "preview": "vite preview --port 5174"
   },
   "dependencies": {
+    "@juliocesar-io/nano-protein-viewer-react": "file:..",
+    "molstar": "^5.2.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@juliocesar-io/nano-protein-viewer-react": "file:.."
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",
