@@ -12,8 +12,6 @@ This project brings the Mol\*-powered molecular visualization experience to the 
 pnpm install @juliocesar-io/nano-protein-viewer-react
 ```
 
-Peer deps: `react`, `react-dom`, `molstar`.
-
 ## Use in your app
 
 ```tsx
