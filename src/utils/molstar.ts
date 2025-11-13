@@ -26,6 +26,7 @@ export interface MolstarViewerHandle {
   applySurface: (enabled: boolean, options?: { opacity?: number; inherit?: boolean; customColor?: string }) => Promise<void>;
   resetView: () => Promise<void>;
   resetColorTheme: () => Promise<void>;
+  setBackgroundColor: (theme: 'light' | 'dark') => void;
 }
 
 type ChainColorParams = { chainColors: Record<string | number, string | number> };
@@ -537,5 +538,24 @@ export function createMolstarViewer(): MolstarViewerHandle {
     viewer.plugin.managers.camera.reset();
   }
 
-  return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme };
+  function setBackgroundColor(theme: 'light' | 'dark') {
+    if (!viewer) return;
+    const plugin = viewer.plugin;
+    requestAnimationFrame(() => {
+      try {
+        if (plugin?.canvas3d) {
+          const backgroundColor = theme === 'dark' 
+            ? { r: 0, g: 0, b: 0 }  // Black for dark theme
+            : { r: 255, g: 255, b: 255 };  // White for light theme
+          plugin.canvas3d.setProps({
+            renderer: {
+              backgroundColor
+            }
+          } as any);
+        }
+      } catch {}
+    });
+  }
+
+  return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme, setBackgroundColor };
 }

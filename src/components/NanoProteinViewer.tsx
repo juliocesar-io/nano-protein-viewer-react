@@ -16,6 +16,110 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
   const mol = useMemo(() => createMolstarViewer(), []);
   const [loaded, setLoaded] = useState<LoadedStructure[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
+  
+  // Detect theme from URL query parameter
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('theme') === 'dark' ? 'dark' : 'light';
+  });
+
+  // Apply dark mode styles to Molstar components
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const styleId = 'molstar-dark-mode-styles';
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+
+    if (theme === 'dark') {
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        document.head.appendChild(styleElement);
+      }
+      styleElement.textContent = `
+        .msp-plugin .msp-sequence {
+          background: #111318 !important;
+        }
+        .msp-plugin .msp-sequence-select {
+          background: #1f222b !important;
+        }
+        .msp-plugin .msp-sequence-wrapper-non-empty {
+          background: #0c0d11 !important;
+          color: #ccd4e0 !important;
+        }
+        .msp-plugin .msp-sequence-chain-label,
+        .msp-plugin .msp-sequence-label,
+        .msp-plugin .msp-sequence-number {
+          color: #51a2fb !important;
+        }
+        .msp-plugin .msp-sequence-present {
+          color: #ccd4e0 !important;
+        }
+        .msp-plugin .msp-sequence-missing {
+          color: #637ca0 !important;
+        }
+        .msp-plugin .msp-sequence-select > span {
+          color: #ccd4e0 !important;
+        }
+        .msp-plugin .msp-sequence-select > select {
+          background: #1f222b !important;
+          color: #ccd4e0 !important;
+        }
+      `;
+    } else {
+      // Apply light theme styles
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        document.head.appendChild(styleElement);
+      }
+      styleElement.textContent = `
+        .msp-plugin .msp-sequence {
+          background: #f8fafc !important;
+        }
+        .msp-plugin .msp-sequence-select {
+          background: #ffffff !important;
+        }
+        .msp-plugin .msp-sequence-wrapper-non-empty {
+          background: #f1f5f9 !important;
+          color: #1e293b !important;
+        }
+        .msp-plugin .msp-sequence-chain-label,
+        .msp-plugin .msp-sequence-label,
+        .msp-plugin .msp-sequence-number {
+          color: #3b82f6 !important;
+        }
+        .msp-plugin .msp-sequence-present {
+          color: #1e293b !important;
+        }
+        .msp-plugin .msp-sequence-missing {
+          color: #94a3b8 !important;
+        }
+        .msp-plugin .msp-sequence-select > span {
+          color: #1e293b !important;
+        }
+        .msp-plugin .msp-sequence-select > select {
+          background: #ffffff !important;
+          color: #1e293b !important;
+        }
+      `;
+    }
+    // Set background color based on theme
+    mol.setBackgroundColor(theme);
+  }, [theme, mol]);
+
+  // Listen for URL changes to update theme
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkTheme = () => {
+      const params = new URLSearchParams(window.location.search);
+      const newTheme = params.get('theme') === 'dark' ? 'dark' : 'light';
+      setTheme(newTheme);
+    };
+    checkTheme();
+    window.addEventListener('popstate', checkTheme);
+    return () => window.removeEventListener('popstate', checkTheme);
+  }, []);
 
   // Color controls
   const [colorMode, setColorMode] = useState<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'>('custom');
@@ -27,8 +131,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
   const [illustrative, setIllustrative] = useState(false);
   const [surface, setSurface] = useState<{ enabled: boolean; opacity: number; inherit: boolean; customColor: string }>({ enabled: false, opacity: 40, inherit: true, customColor: '#4ECDC4' });
   const [layoutMode, setLayoutMode] = useState<'single'|'grid'>('single');
-  const [showControls, setShowControls] = useState(true);
-  const [showFiles, setShowFiles] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const [showFiles, setShowFiles] = useState(false);
 
   type ViewerSettings = {
     colorMode: typeof colorMode;
@@ -77,6 +181,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
           setCurrentIndex(results.length > 0 ? 0 : -1);
           if (results.length > 0) {
             await mol.loadStructureText(results[0].data, results[0].format);
+            // Set background color after loading
+            mol.setBackgroundColor(theme);
             // detect chains and init defaults
             const chains = await mol.listChains();
             setDetectedChains(chains);
@@ -124,7 +230,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       }
     })();
     return () => { isCancelled = true; };
-  }, [fetchAndLoad, mol, structureUrls]);
+  }, [fetchAndLoad, mol, structureUrls, theme]);
 
   const onSelectIndex = useCallback(async (idx: number) => {
     if (idx < 0 || idx >= loaded.length) return;
@@ -141,6 +247,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
     setIsApplying(true);
     setCurrentIndex(idx);
     await mol.loadStructureText(loaded[idx].data, loaded[idx].format, false);
+    // Set background color after loading
+    mol.setBackgroundColor(theme);
 
     // Update detected chains for the newly loaded structure
     const chains = await mol.listChains();
@@ -197,7 +305,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
     } finally {
       setIsApplying(false);
     }
-  }, [chainColors, colorMode, currentIndex, customColor, getDefaultSettings, getKey, illustrative, loaded, mol, rainbowPalette, secondaryColors, settingsByFile, surface]);
+  }, [chainColors, colorMode, currentIndex, customColor, getDefaultSettings, getKey, illustrative, loaded, mol, rainbowPalette, secondaryColors, settingsByFile, surface, theme]);
 
   // When current file changes, restore its saved settings (or initialize from current defaults)
   useEffect(() => {
@@ -273,9 +381,11 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       const current = loaded[currentIndex] ?? loaded[0];
       if (current) {
         await mol.loadStructureText(current.data, current.format, false);
+        // Set background color after loading
+        mol.setBackgroundColor(theme);
       }
     })();
-  }, [layoutMode, currentIndex, loaded, mol]);
+  }, [layoutMode, currentIndex, loaded, mol, theme]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
