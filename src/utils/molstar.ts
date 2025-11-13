@@ -16,7 +16,7 @@ export interface MolstarViewerHandle {
   viewer: MolstarViewerInstance | null;
   mount: (container: HTMLElement) => Promise<void>;
   clear: () => Promise<void>;
-  loadStructureText: (data: string, format: StructureFormat, maintainView?: boolean) => Promise<void>;
+  loadStructureText: (data: string, format: StructureFormat, maintainView?: boolean, skipPLDDTAutoApply?: boolean) => Promise<void>;
   updateColorTheme: (
     mode: 'custom' | 'element' | 'residue' | 'secondary' | 'chain' | 'rainbow',
     params?: ColorThemeParams
@@ -154,7 +154,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
     await viewer.plugin.clear();
   }
 
-  async function loadStructureText(data: string, format: StructureFormat, maintainView: boolean = false) {
+  async function loadStructureText(data: string, format: StructureFormat, maintainView: boolean = false, skipPLDDTAutoApply: boolean = false) {
     if (!viewer) throw new Error('Viewer not mounted');
 
     const plugin = viewer.plugin;
@@ -199,25 +199,28 @@ export function createMolstarViewer(): MolstarViewerHandle {
     }
 
     // Try to apply pLDDT theme by default only when true pLDDT data exists
-    try {
-      const structures = plugin.managers.structure.hierarchy.current.structures;
-      if (structures && structures.length > 0) {
-        const structObj = structures[0]?.cell?.obj?.data as any;
-        const models = structObj?.models as any[] | undefined;
-        const hasPLDDT = Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
-        if (hasPLDDT) {
-          // Ensure QA properties are attached for pLDDT access
-          for (const m of models) {
-            await QualityAssessmentProvider.attach(plugin.context, m, void 0, true);
-          }
-          for (const s of structures) {
-            if (s.components && s.components.length > 0) {
-              await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: PLDDTConfidenceColorThemeProvider.name });
+    // Skip if skipPLDDTAutoApply is true (e.g., when explicit color mode is set)
+    if (!skipPLDDTAutoApply) {
+      try {
+        const structures = plugin.managers.structure.hierarchy.current.structures;
+        if (structures && structures.length > 0) {
+          const structObj = structures[0]?.cell?.obj?.data as any;
+          const models = structObj?.models as any[] | undefined;
+          const hasPLDDT = Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
+          if (hasPLDDT) {
+            // Ensure QA properties are attached for pLDDT access
+            for (const m of models) {
+              await QualityAssessmentProvider.attach(plugin.context, m, void 0, true);
+            }
+            for (const s of structures) {
+              if (s.components && s.components.length > 0) {
+                await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: PLDDTConfidenceColorThemeProvider.name });
+              }
             }
           }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
     if (!maintainView) plugin.managers.camera.reset();
   }

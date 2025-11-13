@@ -108,21 +108,36 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
     mol.setBackgroundColor(theme);
   }, [theme, mol]);
 
-  // Listen for URL changes to update theme
+  // Listen for URL changes to update theme and color mode
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const checkTheme = () => {
+    const checkParams = () => {
       const params = new URLSearchParams(window.location.search);
       const newTheme = params.get('theme') === 'dark' ? 'dark' : 'light';
       setTheme(newTheme);
+      
+      const colorParam = params.get('color');
+      const validModes: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
+      if (colorParam && validModes.includes(colorParam as any)) {
+        setColorMode(colorParam as 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow');
+      }
     };
-    checkTheme();
-    window.addEventListener('popstate', checkTheme);
-    return () => window.removeEventListener('popstate', checkTheme);
+    checkParams();
+    window.addEventListener('popstate', checkParams);
+    return () => window.removeEventListener('popstate', checkParams);
   }, []);
 
-  // Color controls
-  const [colorMode, setColorMode] = useState<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'>('custom');
+  // Color controls - initialize from URL parameter
+  const [colorMode, setColorMode] = useState<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'>(() => {
+    if (typeof window === 'undefined') return 'custom';
+    const params = new URLSearchParams(window.location.search);
+    const colorParam = params.get('color');
+    const validModes: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
+    if (colorParam && validModes.includes(colorParam as any)) {
+      return colorParam as 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow';
+    }
+    return 'custom';
+  });
   const [customColor, setCustomColor] = useState('');
   const [secondaryColors, setSecondaryColors] = useState<{ helix: string; sheet: string; coil: string }>({ helix: '#0FA3FF', sheet: '#24B235', coil: '#E8E8E8' });
   const [rainbowPalette, setRainbowPalette] = useState<'rainbow'|'viridis'|'plasma'|'magma'|'blue-red'|'pastel'>('rainbow');
@@ -180,24 +195,50 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
           setLoaded(results);
           setCurrentIndex(results.length > 0 ? 0 : -1);
           if (results.length > 0) {
-            await mol.loadStructureText(results[0].data, results[0].format);
+            // Check if URL has color parameter - skip pLDDT auto-apply if set
+            const urlParamsCheck = new URLSearchParams(window.location.search);
+            const urlColorParamCheck = urlParamsCheck.get('color');
+            const validModesCheck: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
+            const hasColorParam = !!(urlColorParamCheck && validModesCheck.includes(urlColorParamCheck as any));
+            
+            await mol.loadStructureText(results[0].data, results[0].format, false, hasColorParam);
             // Set background color after loading
             mol.setBackgroundColor(theme);
             // detect chains and init defaults
             const chains = await mol.listChains();
             setDetectedChains(chains);
+            let localChainColors: Record<string,string> = chainColors;
             if (chains.length) {
               const defaults = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B4B4','#52B788'];
               const cc: Record<string,string> = {};
               chains.forEach((c, i) => { cc[c] = defaults[i % defaults.length]; });
+              localChainColors = cc;
               setChainColors(cc);
             }
             // init settings for first file if missing
             const key = results[0].name;
+            // Check if URL has color parameter - it takes precedence (reuse from above)
+            const urlColorMode = urlColorParamCheck && validModesCheck.includes(urlColorParamCheck as any) 
+              ? (urlColorParamCheck as 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow')
+              : null;
+            
+            let finalColorMode: 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow' = colorMode;
+            let finalCustomColor = customColor;
+            
             if (results[0].style) {
               const s = results[0].style;
-              if (s.colorMode) setColorMode(s.colorMode);
-              if (s.customColor !== undefined) setCustomColor(s.customColor);
+              // Use URL color parameter if present, otherwise use structure style
+              if (urlColorMode) {
+                finalColorMode = urlColorMode;
+                setColorMode(urlColorMode);
+              } else if (s.colorMode) {
+                finalColorMode = s.colorMode;
+                setColorMode(s.colorMode);
+              }
+              if (s.customColor !== undefined) {
+                finalCustomColor = s.customColor;
+                setCustomColor(s.customColor);
+              }
               if (s.illustrative !== undefined) setIllustrative(s.illustrative);
               if (s.surface !== undefined) setSurface({
                 enabled: !!s.surface.enabled,
@@ -206,11 +247,11 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
                 customColor: s.surface.customColor ?? '#4ECDC4'
               });
               setSettingsByFile(prev => ({ ...prev, [key]: {
-                colorMode: s.colorMode ?? colorMode,
-                customColor: s.customColor ?? customColor,
+                colorMode: finalColorMode,
+                customColor: finalCustomColor,
                 secondaryColors,
                 rainbowPalette,
-                chainColors,
+                chainColors: localChainColors,
                 illustrative: s.illustrative ?? illustrative,
                 surface: {
                   enabled: !!(s.surface && s.surface.enabled),
@@ -220,7 +261,35 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
                 }
               }}));
             } else {
+              // If URL has color parameter, use it; otherwise use default
+              if (urlColorMode) {
+                finalColorMode = urlColorMode;
+                setColorMode(urlColorMode);
+              }
               setSettingsByFile(prev => prev[key] ? prev : ({ ...prev, [key]: getDefaultSettings() }));
+            }
+            
+            // Apply color theme immediately after setting up
+            try {
+              if (finalColorMode === 'none') {
+                // no theme override
+              } else if (finalColorMode === 'custom') {
+                if (finalCustomColor) await mol.updateColorTheme('custom', { hex: finalCustomColor });
+              } else if (finalColorMode === 'secondary') {
+                await mol.updateColorTheme('secondary', { secondaryColors });
+              } else if (finalColorMode === 'element') {
+                await mol.updateColorTheme('element');
+              } else if (finalColorMode === 'residue') {
+                await mol.updateColorTheme('residue');
+              } else if (finalColorMode === 'chain') {
+                // Use localChainColors which is guaranteed to be up-to-date
+                await mol.updateColorTheme('chain', { chainColors: localChainColors });
+              } else if (finalColorMode === 'rainbow') {
+                await mol.updateColorTheme('rainbow', { palette: rainbowPalette });
+              }
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.warn('Failed to apply color theme on initial load:', e);
             }
           }
         } catch (e) {
@@ -246,24 +315,52 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
 
     setIsApplying(true);
     setCurrentIndex(idx);
-    await mol.loadStructureText(loaded[idx].data, loaded[idx].format, false);
+    
+    // Check if URL has color parameter - skip pLDDT auto-apply if set
+    const urlParamsSelect = new URLSearchParams(window.location.search);
+    const urlColorParamSelect = urlParamsSelect.get('color');
+    const validModesSelect: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
+    const hasColorParamSelect = !!(urlColorParamSelect && validModesSelect.includes(urlColorParamSelect as any));
+    
+    await mol.loadStructureText(loaded[idx].data, loaded[idx].format, false, hasColorParamSelect);
     // Set background color after loading
     mol.setBackgroundColor(theme);
 
     // Update detected chains for the newly loaded structure
     const chains = await mol.listChains();
     setDetectedChains(chains);
+    
+    // Update chain colors if chains were detected
+    let updatedChainColors = chainColors;
+    if (chains.length) {
+      const defaults = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B4B4','#52B788'];
+      const cc: Record<string,string> = {};
+      chains.forEach((c, i) => { cc[c] = defaults[i % defaults.length]; });
+      updatedChainColors = cc;
+      setChainColors(cc);
+    }
+
+    // Check if URL has color parameter - it takes precedence (reuse from above)
+    const urlColorMode = urlColorParamSelect && validModesSelect.includes(urlColorParamSelect as any) 
+      ? (urlColorParamSelect as 'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow')
+      : null;
 
     // Compute next settings deterministically for this file
     const key = getKey(idx);
     const saved = settingsByFile[key];
     const incoming = loaded[idx]?.style;
-    const next = saved ?? {
-      colorMode: incoming?.colorMode ?? colorMode,
+    // URL color parameter takes precedence over saved settings and structure style
+    const finalColorMode = urlColorMode ?? (saved ? saved.colorMode : (incoming?.colorMode ?? colorMode));
+    const next = saved ? {
+      ...saved,
+      colorMode: finalColorMode,
+      chainColors: updatedChainColors  // Use updated chain colors
+    } : {
+      colorMode: finalColorMode,
       customColor: incoming?.customColor ?? customColor,
       secondaryColors,
       rainbowPalette,
-      chainColors,
+      chainColors: updatedChainColors,  // Use updated chain colors
       illustrative: incoming?.illustrative ?? illustrative,
       surface: {
         enabled: !!(incoming?.surface && incoming.surface.enabled),
@@ -296,6 +393,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       } else if (next.colorMode === 'residue') {
         await mol.updateColorTheme('residue');
       } else if (next.colorMode === 'chain') {
+        // Use updated chain colors
         await mol.updateColorTheme('chain', { chainColors: next.chainColors });
       } else if (next.colorMode === 'rainbow') {
         await mol.updateColorTheme('rainbow', { palette: next.rainbowPalette });
@@ -334,7 +432,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       if (colorMode === 'none') {
         const current = loaded[currentIndex] ?? loaded[0];
         if (current) {
-          await mol.loadStructureText(current.data, current.format, false);
+          // Skip pLDDT when colorMode is explicitly set to 'none'
+          await mol.loadStructureText(current.data, current.format, false, true);
         }
         return;
       }
@@ -380,7 +479,13 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       await mol.mount(el);
       const current = loaded[currentIndex] ?? loaded[0];
       if (current) {
-        await mol.loadStructureText(current.data, current.format, false);
+        // Check if URL has color parameter - skip pLDDT auto-apply if set
+        const urlParamsLayout = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const urlColorParamLayout = urlParamsLayout?.get('color');
+        const validModesLayout: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
+        const hasColorParamLayout = !!(urlColorParamLayout && validModesLayout.includes(urlColorParamLayout as any));
+        
+        await mol.loadStructureText(current.data, current.format, false, hasColorParamLayout);
         // Set background color after loading
         mol.setBackgroundColor(theme);
       }

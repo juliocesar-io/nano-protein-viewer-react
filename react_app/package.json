@@ -11,7 +11,7 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@juliocesar-io/nano-protein-viewer-react": "^0.0.12"
+    "@juliocesar-io/nano-protein-viewer-react": "^0.0.13"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.0",
