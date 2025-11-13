@@ -27,6 +27,8 @@ export interface MolstarViewerHandle {
   resetView: () => Promise<void>;
   resetColorTheme: () => Promise<void>;
   setBackgroundColor: (theme: 'light' | 'dark') => void;
+  isPLDDTAvailable: () => Promise<boolean>;
+  applyPLDDTTheme: (enabled: boolean) => Promise<void>;
 }
 
 type ChainColorParams = { chainColors: Record<string | number, string | number> };
@@ -560,5 +562,58 @@ export function createMolstarViewer(): MolstarViewerHandle {
     });
   }
 
-  return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme, setBackgroundColor };
+  async function isPLDDTAvailable(): Promise<boolean> {
+    if (!viewer) return false;
+    try {
+      const plugin = viewer.plugin;
+      const structures = plugin.managers.structure.hierarchy.current.structures;
+      if (!structures || structures.length === 0) return false;
+      const structObj = structures[0]?.cell?.obj?.data as any;
+      const models = structObj?.models as any[] | undefined;
+      return Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
+    } catch {
+      return false;
+    }
+  }
+
+  async function applyPLDDTTheme(enabled: boolean) {
+    if (!viewer) return;
+    try {
+      const plugin = viewer.plugin;
+      const structures = plugin.managers.structure.hierarchy.current.structures;
+      if (!structures || structures.length === 0) return;
+      
+      const structObj = structures[0]?.cell?.obj?.data as any;
+      const models = structObj?.models as any[] | undefined;
+      const hasPLDDT = Array.isArray(models) && models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
+      
+      if (!hasPLDDT) return;
+      
+      if (enabled) {
+        // Ensure QA properties are attached for pLDDT access
+        if (models) {
+          for (const m of models) {
+            await QualityAssessmentProvider.attach(plugin.context, m, void 0, true);
+          }
+        }
+        // Apply PLDDT theme
+        for (const s of structures) {
+          if (s.components && s.components.length > 0) {
+            await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: PLDDTConfidenceColorThemeProvider.name });
+          }
+        }
+      } else {
+        // Revert to chain-id theme when disabling PLDDT
+        for (const s of structures) {
+          if (s.components && s.components.length > 0) {
+            await plugin.managers.structure.component.updateRepresentationsTheme(s.components, { color: 'chain-id' });
+          }
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  return { viewer, mount, clear, loadStructureText, updateColorTheme, listChains, applyIllustrativeStyle, applySurface, resetView, resetColorTheme, setBackgroundColor, isPLDDTAvailable, applyPLDDTTheme };
 }

@@ -145,6 +145,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
   const [chainColors, setChainColors] = useState<Record<string,string>>({});
   const [illustrative, setIllustrative] = useState(false);
   const [surface, setSurface] = useState<{ enabled: boolean; opacity: number; inherit: boolean; customColor: string }>({ enabled: false, opacity: 40, inherit: true, customColor: '#4ECDC4' });
+  const [plddtEnabled, setPlddtEnabled] = useState(false);
+  const [plddtAvailable, setPlddtAvailable] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'single'|'grid'>('single');
   const [showControls, setShowControls] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
@@ -268,6 +270,10 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
               }
               setSettingsByFile(prev => prev[key] ? prev : ({ ...prev, [key]: getDefaultSettings() }));
             }
+            
+            // Check PLDDT availability
+            const plddtAvail = await mol.isPLDDTAvailable();
+            setPlddtAvailable(plddtAvail);
             
             // Apply color theme immediately after setting up
             try {
@@ -400,6 +406,10 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       }
       await mol.applyIllustrativeStyle(next.illustrative);
       await mol.applySurface(next.surface.enabled, { opacity: next.surface.opacity, inherit: next.surface.inherit, customColor: next.surface.customColor });
+      
+      // Check PLDDT availability for the new structure
+      const plddtAvail = await mol.isPLDDTAvailable();
+      setPlddtAvailable(plddtAvail);
     } finally {
       setIsApplying(false);
     }
@@ -457,6 +467,14 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
   // Apply illustrative/surface when toggled
   useEffect(() => { if (isApplying) return; (async () => { await mol.applyIllustrativeStyle(illustrative); })(); }, [illustrative, currentIndex, mol, isApplying]);
   useEffect(() => { if (isApplying) return; (async () => { await mol.applySurface(surface.enabled, { opacity: surface.opacity, inherit: surface.inherit, customColor: surface.customColor }); })(); }, [surface.enabled, surface.opacity, surface.inherit, surface.customColor, currentIndex, mol, isApplying]);
+  
+  // Apply PLDDT theme when toggled
+  useEffect(() => {
+    if (isApplying || !plddtAvailable) return;
+    (async () => {
+      await mol.applyPLDDTTheme(plddtEnabled);
+    })();
+  }, [plddtEnabled, plddtAvailable, currentIndex, mol, isApplying]);
 
   // Persist settings per file whenever controls change
   useEffect(() => {
@@ -530,6 +548,9 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
                 onToggleIllustrative={setIllustrative}
                 surface={surface}
               setSurface={setSurface}
+              plddtEnabled={plddtEnabled}
+              onTogglePLDDT={setPlddtEnabled}
+              plddtAvailable={plddtAvailable}
               onAddLocalStructures={(items) => {
                 setLoaded(prev => [...prev, ...items.map(i => ({ name: i.name, data: i.data, format: i.format }))]);
               }}

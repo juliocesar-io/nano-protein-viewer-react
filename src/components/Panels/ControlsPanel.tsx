@@ -18,6 +18,9 @@ interface ControlsPanelProps {
   onToggleIllustrative?: (v: boolean) => void;
   surface?: { enabled: boolean; opacity: number; inherit: boolean; customColor: string };
   setSurface?: (s: { enabled: boolean; opacity: number; inherit: boolean; customColor: string }) => void;
+  plddtEnabled?: boolean;
+  onTogglePLDDT?: (enabled: boolean) => void;
+  plddtAvailable?: boolean;
   onResetView?: () => void;
   // layout controls removed; handled by separate LayoutPanel
   onAddLocalStructures?: (items: Array<{ name: string; data: string; format: 'pdb'|'mmcif' }>) => void;
@@ -261,6 +264,17 @@ export function ControlsPanel(props: ControlsPanelProps) {
                 )}
               </div>
             )}
+          </div>
+        )}
+        {props.plddtAvailable && typeof props.plddtEnabled === 'boolean' && props.onTogglePLDDT && (
+          <div style={{ marginTop: 8 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+              <input
+                type="checkbox"
+                checked={props.plddtEnabled}
+                onChange={(e) => props.onTogglePLDDT!(e.target.checked)}
+              /> PLDDT
+            </label>
           </div>
         )}
       </div>
