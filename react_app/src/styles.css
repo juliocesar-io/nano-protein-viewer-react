@@ -7,4 +7,146 @@ html, body, #root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
+.msp-plugin .msp-semi-transparent-background {
+  background: none !important;
+}
+.msp-plugin .msp-btn-icon {
 
+  color:white !important;
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-top {
+  border-bottom: 1px solid #111318 !important;
+}
+
+.msp-plugin .msp-sequence {
+  background: #111318 !important;
+}
+
+.msp-plugin .msp-sequence-select {
+  background: #1f222b !important;
+}
+
+.msp-plugin .msp-sequence-wrapper-non-empty {
+  background: #0c0d11 !important;
+  color: #ccd4e0 !important;
+}
+
+.msp-plugin .msp-sequence-chain-label,
+.msp-plugin .msp-sequence-label,
+.msp-plugin .msp-sequence-number {
+  color: #51a2fb !important;
+}
+
+.msp-plugin .msp-sequence-present {
+  color: #ccd4e0 !important;
+}
+
+.msp-plugin .msp-sequence-missing {
+  color: #637ca0 !important;
+}
+
+.msp-plugin .msp-sequence-select>span {
+  color: #ccd4e0 !important;
+}
+
+.msp-plugin .msp-sequence-select>select {
+  background: #1f222b !important;
+  color: #ccd4e0 !important;
+}
+
+
+.msp-plugin .msp-layout-expanded,
+.msp-plugin .msp-layout-standard {
+  inset: 0
+}
+
+.msp-plugin .msp-layout-standard {
+  border: 1px solid hsl(var(--border))
+}
+
+.msp-plugin .msp-layout-region {
+  overflow: hidden
+}
+
+.msp-plugin .msp-layout-static,
+.msp-plugin .msp-layout-scrollable {
+  position: absolute
+}
+
+.msp-plugin .msp-scrollable {
+  overflow-y: auto
+}
+
+.msp-plugin .msp-scrollable-container {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto
+}
+
+.msp-plugin .msp-layout-static {
+  overflow: hidden
+}
+
+.msp-plugin .msp-layout-top .msp-layout-static,
+.msp-plugin .msp-layout-main .msp-layout-static,
+.msp-plugin .msp-layout-bottom .msp-layout-static,
+.msp-plugin .msp-layout-right .msp-layout-static {
+  inset: 0
+}
+
+.msp-plugin .msp-layout-right .msp-layout-scrollable {
+  inset: 43px 0 0
+}
+
+.msp-plugin .msp-layout-left .msp-layout-static {
+  inset: 0
+}
+
+.msp-plugin .msp-layout-standard-outside {
+  position: absolute
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-main {
+  position: absolute;
+  top: 97px !important;
+  inset: 0
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-top {
+
+  right: 0;
+  height: 97px;
+  top: 0;
+  width: 50%;
+
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 97px;
+  top: -97px;
+  width: 50%;
+  border-bottom: 1px solid hsl(var(--border))
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-right {
+  position: absolute;
+  width: 50%;
+  right: 0;
+  bottom: -295px;
+  height: 295px;
+  border-left: 1px solid hsl(var(--border));
+  border-top: 1px solid hsl(var(--border))
+}
+
+.msp-plugin .msp-layout-standard-outside .msp-layout-left {
+  position: absolute;
+  width: 50%;
+  left: 0;
+  bottom: -295px;
+  height: 295px;
+  border-top: 1px solid hsl(var(--border))
+}

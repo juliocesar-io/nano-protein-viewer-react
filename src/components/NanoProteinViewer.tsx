@@ -16,106 +16,12 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
   const mol = useMemo(() => createMolstarViewer(), []);
   const [loaded, setLoaded] = useState<LoadedStructure[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
-  
-  // Detect theme from URL query parameter
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    const params = new URLSearchParams(window.location.search);
-    return params.get('theme') === 'dark' ? 'dark' : 'light';
-  });
 
-  // Apply dark mode styles to Molstar components
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const styleId = 'molstar-dark-mode-styles';
-    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
-
-    if (theme === 'dark') {
-      if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = styleId;
-        document.head.appendChild(styleElement);
-      }
-      styleElement.textContent = `
-        .msp-plugin .msp-sequence {
-          background: #111318 !important;
-        }
-        .msp-plugin .msp-sequence-select {
-          background: #1f222b !important;
-        }
-        .msp-plugin .msp-sequence-wrapper-non-empty {
-          background: #0c0d11 !important;
-          color: #ccd4e0 !important;
-        }
-        .msp-plugin .msp-sequence-chain-label,
-        .msp-plugin .msp-sequence-label,
-        .msp-plugin .msp-sequence-number {
-          color: #51a2fb !important;
-        }
-        .msp-plugin .msp-sequence-present {
-          color: #ccd4e0 !important;
-        }
-        .msp-plugin .msp-sequence-missing {
-          color: #637ca0 !important;
-        }
-        .msp-plugin .msp-sequence-select > span {
-          color: #ccd4e0 !important;
-        }
-        .msp-plugin .msp-sequence-select > select {
-          background: #1f222b !important;
-          color: #ccd4e0 !important;
-        }
-      `;
-    } else {
-      // Apply light theme styles
-      if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = styleId;
-        document.head.appendChild(styleElement);
-      }
-      styleElement.textContent = `
-        .msp-plugin .msp-sequence {
-          background: #f8fafc !important;
-        }
-        .msp-plugin .msp-sequence-select {
-          background: #ffffff !important;
-        }
-        .msp-plugin .msp-sequence-wrapper-non-empty {
-          background: #f1f5f9 !important;
-          color: #1e293b !important;
-        }
-        .msp-plugin .msp-sequence-chain-label,
-        .msp-plugin .msp-sequence-label,
-        .msp-plugin .msp-sequence-number {
-          color: #3b82f6 !important;
-        }
-        .msp-plugin .msp-sequence-present {
-          color: #1e293b !important;
-        }
-        .msp-plugin .msp-sequence-missing {
-          color: #94a3b8 !important;
-        }
-        .msp-plugin .msp-sequence-select > span {
-          color: #1e293b !important;
-        }
-        .msp-plugin .msp-sequence-select > select {
-          background: #ffffff !important;
-          color: #1e293b !important;
-        }
-      `;
-    }
-    // Set background color based on theme
-    mol.setBackgroundColor(theme);
-  }, [theme, mol]);
-
-  // Listen for URL changes to update theme and color mode
+  // Listen for URL changes to update color mode
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const checkParams = () => {
       const params = new URLSearchParams(window.location.search);
-      const newTheme = params.get('theme') === 'dark' ? 'dark' : 'light';
-      setTheme(newTheme);
-      
       const colorParam = params.get('color');
       const validModes: Array<'none'|'custom'|'element'|'residue'|'secondary'|'chain'|'rainbow'> = ['none', 'custom', 'element', 'residue', 'secondary', 'chain', 'rainbow'];
       if (colorParam && validModes.includes(colorParam as any)) {
@@ -204,8 +110,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
             const hasColorParam = !!(urlColorParamCheck && validModesCheck.includes(urlColorParamCheck as any));
             
             await mol.loadStructureText(results[0].data, results[0].format, false, hasColorParam);
-            // Set background color after loading
-            mol.setBackgroundColor(theme);
+            
             // detect chains and init defaults
             const chains = await mol.listChains();
             setDetectedChains(chains);
@@ -305,7 +210,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
       }
     })();
     return () => { isCancelled = true; };
-  }, [fetchAndLoad, mol, structureUrls, theme]);
+  }, [fetchAndLoad, mol, structureUrls]);
 
   const onSelectIndex = useCallback(async (idx: number) => {
     if (idx < 0 || idx >= loaded.length) return;
@@ -329,8 +234,6 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
     const hasColorParamSelect = !!(urlColorParamSelect && validModesSelect.includes(urlColorParamSelect as any));
     
     await mol.loadStructureText(loaded[idx].data, loaded[idx].format, false, hasColorParamSelect);
-    // Set background color after loading
-    mol.setBackgroundColor(theme);
 
     // Update detected chains for the newly loaded structure
     const chains = await mol.listChains();
@@ -413,7 +316,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
     } finally {
       setIsApplying(false);
     }
-  }, [chainColors, colorMode, currentIndex, customColor, getDefaultSettings, getKey, illustrative, loaded, mol, rainbowPalette, secondaryColors, settingsByFile, surface, theme]);
+  }, [chainColors, colorMode, currentIndex, customColor, getDefaultSettings, getKey, illustrative, loaded, mol, rainbowPalette, secondaryColors, settingsByFile, surface]);
 
   // When current file changes, restore its saved settings (or initialize from current defaults)
   useEffect(() => {
@@ -505,10 +408,10 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
         
         await mol.loadStructureText(current.data, current.format, false, hasColorParamLayout);
         // Set background color after loading
-        mol.setBackgroundColor(theme);
+        mol.setBackgroundColor('dark');
       }
     })();
-  }, [layoutMode, currentIndex, loaded, mol, theme]);
+  }, [layoutMode, currentIndex, loaded, mol]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -527,7 +430,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
                 onClick={() => setShowControls(false)}
                 aria-label="Hide controls"
                 title="Hide"
-                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '2px 8px', cursor: 'pointer', zIndex: 1 }}
+                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(50, 50, 50, 0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 8px', cursor: 'pointer', zIndex: 1, color: 'rgba(255,255,255,0.9)' }}
               >×</button>
               <ControlsPanel
                 colorMode={colorMode}
@@ -563,8 +466,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
             aria-label="Show controls"
             title="Show controls"
             style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', zIndex: 10,
-              background: 'linear-gradient(180deg, #ffffffcc, #ffffffa0)', color: '#2b2b2b', border: '1px solid rgba(255,255,255,0.6)',
-              borderRadius: 999, padding: '8px 14px', fontWeight: 600, letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(0,0,0,0.15)', cursor: 'pointer' }}
+              background: '#ffffff', color: '#000000', border: '1px solid rgba(0,0,0,0.2)',
+              borderRadius: 999, padding: '10px 18px', fontSize: 14, letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(0,0,0,0.3)', cursor: 'pointer' }}
           >Controls</button>
         )
       )}
@@ -576,7 +479,7 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
               onClick={() => setShowFiles(false)}
               aria-label="Hide files"
               title="Hide"
-              style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '2px 8px', cursor: 'pointer', zIndex: 1 }}
+              style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(50, 50, 50, 0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 8px', cursor: 'pointer', zIndex: 1, color: 'rgba(255,255,255,0.9)' }}
             >×</button>
             <FileListPanel
               files={loaded.map((f) => ({ name: f.name, format: f.format }))}
@@ -591,8 +494,8 @@ export function NanoProteinViewer({ structureUrls }: NanoProteinViewerProps) {
           aria-label="Show files"
           title="Show files"
           style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
-            background: 'linear-gradient(180deg, #ffffffcc, #ffffffa0)', color: '#2b2b2b', border: '1px solid rgba(255,255,255,0.6)',
-            borderRadius: 999, padding: '8px 14px', fontWeight: 600, letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(0,0,0,0.15)', cursor: 'pointer' }}
+            background: '#ffffff', color: '#000000', border: '1px solid rgba(0,0,0,0.2)',
+            borderRadius: 999, padding: '10px 18px', fontSize: 14, letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(0,0,0,0.3)', cursor: 'pointer' }}
         >Files</button>
       )}
 

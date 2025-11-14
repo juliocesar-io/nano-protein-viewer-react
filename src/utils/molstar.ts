@@ -115,7 +115,7 @@ export function createMolstarViewer(): MolstarViewerHandle {
       ...(spec.config || []),
       [PluginConfig.Viewport.ShowControls, false],
       [PluginConfig.Viewport.ShowSettings, true],
-      [PluginConfig.Viewport.ShowExpand, true],
+      [PluginConfig.Viewport.ShowExpand, false],
       [PluginConfig.Viewport.ShowSelectionMode, true],
       [PluginConfig.Viewport.ShowAnimation, true],
       [PluginConfig.Viewport.ShowScreenshotControls, true],

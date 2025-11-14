@@ -57,11 +57,11 @@ export function ControlsPanel(props: ControlsPanelProps) {
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.6)',
-      border: '1px solid rgba(255,255,255,0.3)',
+      background: 'rgba(30, 30, 30, 0.95)',
+      border: '1px solid rgba(255,255,255,0.15)',
       borderRadius: 12,
       padding: 25,
-      boxShadow: '0 8px 32px rgba(31,38,135,0.2)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
       width: '100%',
@@ -74,7 +74,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
           <button onClick={() => document.getElementById(fileInputId)?.click()} style={{
             padding: '10px 14px', width: '100%', borderRadius: 10, border: 'none',
             background: 'linear-gradient(180deg, #5B9CFF, #357AE8)', color: '#fff', fontWeight: 600,
-            letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(53, 122, 232, 0.35)', cursor: 'pointer'
+            letterSpacing: 0.2, boxShadow: '0 6px 16px rgba(53, 122, 232, 0.5)', cursor: 'pointer'
           }}>Load PDB/mmCIF</button>
         </div>
       )}
@@ -82,19 +82,19 @@ export function ControlsPanel(props: ControlsPanelProps) {
       {/* layout controls handled elsewhere */}
 
       <div style={{ marginTop: 12 }}>
-        <h4 style={{ margin: '0 0 8px 0', color: 'hsl(220, 9%, 46%)' }}>Colors</h4>
+        <h4 style={{ margin: '0 0 8px 0', color: 'rgba(255,255,255,0.9)' }}>Colors</h4>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setOpen(o => !o)} style={{
-            background: '#fff', border: '1px solid hsl(214.3 31.8% 91.4%)', borderRadius: 6, padding: '6px 12px',
-            fontSize: 12, color: 'hsl(220, 9%, 46%)', cursor: 'pointer'
+            background: 'rgba(50, 50, 50, 0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '6px 12px',
+            fontSize: 12, color: 'rgba(255,255,255,0.9)', cursor: 'pointer'
           }}>
             {props.colorMode === 'none' ? 'Select' : (props.colorMode === 'rainbow' ? 'Rainbow' : props.colorMode.charAt(0).toUpperCase()+props.colorMode.slice(1))} ▼
           </button>
           {open && (
-            <div style={{ position: 'absolute', background: '#fff', border: '1px solid hsl(214.3 31.8% 91.4%)', borderRadius: 6, marginTop: 4, zIndex: 20, width: 200 }}>
+            <div style={{ position: 'absolute', background: 'rgba(40, 40, 40, 0.98)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, marginTop: 4, zIndex: 20, width: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
               {(['none','custom','element','residue','secondary','chain','rainbow'] as ColorMode[]).map(m => (
                 <div key={m} onClick={() => { props.setColorMode(m); setOpen(false); }}
-                  style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', color: 'hsl(220, 9%, 46%)', background: props.colorMode===m?'hsl(220, 9%, 96%)':'#fff' }}>
+                  style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', color: 'rgba(255,255,255,0.9)', background: props.colorMode===m?'rgba(100, 150, 255, 0.3)':'transparent' }}>
                   {m === 'none' ? 'None' : m.charAt(0).toUpperCase()+m.slice(1)}
                 </div>
               ))}
@@ -115,8 +115,8 @@ export function ControlsPanel(props: ControlsPanelProps) {
                     height: 22,
                     borderRadius: '50%',
                     background: hex,
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    boxShadow: props.customColor===hex ? '0 0 0 2px #111' : 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    boxShadow: props.customColor===hex ? '0 0 0 2px rgba(255,255,255,0.6)' : 'none',
                     cursor: 'pointer'
                   }}
                 />
@@ -135,7 +135,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
                     height: 22,
                     padding: 0,
                     borderRadius: '50%',
-                    border: '1px dashed rgba(0,0,0,0.25)',
+                    border: '1px dashed rgba(255,255,255,0.4)',
                     background: 'transparent',
                     cursor: 'pointer'
                   }}
@@ -149,8 +149,8 @@ export function ControlsPanel(props: ControlsPanelProps) {
                     transform: 'translate(-50%, -50%)',
                     fontWeight: 800,
                     fontSize: 12,
-                    color: '#2b2b2b',
-                    textShadow: '0 1px 2px rgba(255,255,255,0.6)',
+                    color: 'rgba(255,255,255,0.9)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                     pointerEvents: 'none',
                     lineHeight: 1
                   }}
@@ -163,9 +163,9 @@ export function ControlsPanel(props: ControlsPanelProps) {
 
         {props.colorMode === 'secondary' && (
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
-            <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Helix <input type="color" value={props.secondaryColors.helix} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, helix: e.target.value })} style={{ marginLeft: 8 }} /></label>
-            <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Sheet <input type="color" value={props.secondaryColors.sheet} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, sheet: e.target.value })} style={{ marginLeft: 8 }} /></label>
-            <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Coil <input type="color" value={props.secondaryColors.coil} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, coil: e.target.value })} style={{ marginLeft: 8 }} /></label>
+            <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>Helix <input type="color" value={props.secondaryColors.helix} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, helix: e.target.value })} style={{ marginLeft: 8 }} /></label>
+            <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>Sheet <input type="color" value={props.secondaryColors.sheet} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, sheet: e.target.value })} style={{ marginLeft: 8 }} /></label>
+            <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>Coil <input type="color" value={props.secondaryColors.coil} onChange={(e) => props.setSecondaryColors({ ...props.secondaryColors, coil: e.target.value })} style={{ marginLeft: 8 }} /></label>
           </div>
         )}
 
@@ -174,7 +174,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
             <div style={{ display: 'grid', gap: 6 }}>
               {(['rainbow','viridis','plasma','magma','blue-red','pastel'] as const).map(p => (
                 <button key={p} onClick={() => props.setRainbowPalette!(p)}
-                  style={{ padding: '6px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #ddd', background: props.rainbowPalette===p?'#eef':'#fff', cursor: 'pointer' }}>
+                  style={{ padding: '6px 8px', fontSize: 12, borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', background: props.rainbowPalette===p?'rgba(100, 150, 255, 0.3)':'rgba(50, 50, 50, 0.8)', color: 'rgba(255,255,255,0.9)', cursor: 'pointer' }}>
                   {p}
                 </button>
               ))}
@@ -184,10 +184,10 @@ export function ControlsPanel(props: ControlsPanelProps) {
 
         {props.colorMode === 'chain' && props.detectedChains && props.chainColors && props.setChainColor && (
           <div style={{ marginTop: 10 }}>
-            <h4 style={{ margin: '0 0 8px 0', color: 'hsl(220, 9%, 46%)' }}>Customize Chain Colors</h4>
+            <h4 style={{ margin: '0 0 8px 0', color: 'rgba(255,255,255,0.9)' }}>Customize Chain Colors</h4>
             <div style={{ display: 'grid', gap: 6 }}>
               {props.detectedChains.map(id => (
-                <label key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+                <label key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>
                   <span>Chain {id}</span>
                   <input type="color" value={props.chainColors![id] || '#4ECDC4'} onChange={(e) => props.setChainColor!(id, e.target.value)} />
                 </label>
@@ -198,15 +198,15 @@ export function ControlsPanel(props: ControlsPanelProps) {
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <h4 style={{ margin: '0 0 8px 0', color: 'hsl(220, 9%, 46%)' }}>Style</h4>
+        <h4 style={{ margin: '0 0 8px 0', color: 'rgba(255,255,255,0.9)' }}>Style</h4>
         {typeof props.illustrative === 'boolean' && props.onToggleIllustrative && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>
             <input type="checkbox" checked={props.illustrative} onChange={(e) => props.onToggleIllustrative!(e.target.checked)} /> Illustrative
           </label>
         )}
         {props.surface && props.setSurface && (
           <div style={{ marginTop: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>
               <input
                 type="checkbox"
                 checked={props.surface.enabled}
@@ -220,7 +220,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
             </label>
             {props.surface.enabled && (
               <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
-                <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Opacity
+                <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>Opacity
                   <input
                     type="range"
                     min={0}
@@ -235,7 +235,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
                     style={{ width: '100%', marginTop: 4 }}
                   />
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>
                   <input
                     type="checkbox"
                     checked={props.surface.inherit}
@@ -248,7 +248,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
                   /> Inherit color from theme
                 </label>
                 {!props.surface.inherit && (
-                  <label style={{ fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>Surface Color
+                  <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>Surface Color
                     <input
                       type="color"
                       value={props.surface.customColor}
@@ -268,7 +268,7 @@ export function ControlsPanel(props: ControlsPanelProps) {
         )}
         {props.plddtAvailable && typeof props.plddtEnabled === 'boolean' && props.onTogglePLDDT && (
           <div style={{ marginTop: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'hsl(220, 9%, 46%)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>
               <input
                 type="checkbox"
                 checked={props.plddtEnabled}
